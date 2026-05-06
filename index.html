@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Huishoud Kalender</title>
+
+<!-- PWA -->
+<meta name="theme-color" content="#4A6B57">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Huishoud Kalender">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F5F0E8;
+    --warm-white: #FDFAF5;
+    --sage: #7C9E8A;
+    --sage-light: #A8C4B4;
+    --sage-dark: #4A6B57;
+    --terracotta: #C4714A;
+    --terracotta-light: #E8A882;
+    --charcoal: #2C2C2C;
+    --mid-gray: #6B6B6B;
+    --light-gray: #E0DAD0;
+    --shadow: rgba(44,44,44,0.08);
+    --shadow-md: rgba(44,44,44,0.14);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background: var(--cream);
+    color: var(--charcoal);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--sage-dark);
+    color: var(--warm-white);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 12px var(--shadow-md);
+  }
+
+  header h1 {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 1.8rem;
+    letter-spacing: -0.01em;
+  }
+
+  header .subtitle {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    font-weight: 300;
+    margin-top: 2px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .notif-btn {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 24px;
+    cursor: pointer;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .notif-btn:hover { background: rgba(255,255,255,0.25); }
+  .notif-btn.active { background: var(--terracotta); border-color: var(--terracotta); }
+
+  /* LAYOUT */
+  .app {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 0;
+    height: calc(100vh - 76px);
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    background: var(--warm-white);
+    border-right: 1px solid var(--light-gray);
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .section-title {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 1rem;
+    color: var(--sage-dark);
+    margin-bottom: 12px;
+  }
+
+  /* MINI CALENDAR */
+  .mini-cal {
+    background: var(--cream);
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .mini-cal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .mini-cal-header span {
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .mini-cal-nav {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--sage-dark);
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background 0.15s;
+  }
+  .mini-cal-nav:hover { background: var(--light-gray); }
+
+  .mini-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    text-align: center;
+  }
+
+  .mini-cal-grid .day-name {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--mid-gray);
+    padding: 4px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .mini-cal-grid .cal-day {
+    font-size: 0.78rem;
+    padding: 5px 2px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+    position: relative;
+  }
+  .cal-day:hover { background: var(--light-gray); }
+  .cal-day.today { background: var(--sage); color: white; font-weight: 600; }
+  .cal-day.selected { background: var(--sage-dark); color: white; font-weight: 600; }
+  .cal-day.has-task::after {
+    content: '';
+    position: absolute;
+    bottom: 2px; left: 50%; transform: translateX(-50%);
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--terracotta);
+  }
+  .cal-day.today.has-task::after, .cal-day.selected.has-task::after { background: white; }
+  .cal-day.other-month { color: var(--light-gray); }
+
+  /* TASK FORM */
+  .task-form {
+    background: var(--cream);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .form-row label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--mid-gray);
+  }
+
+  .form-row input, .form-row select, .form-row textarea {
+    background: var(--warm-white);
+    border: 1px solid var(--light-gray);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: 0.85rem;
+    color: var(--charcoal);
+    transition: border-color 0.15s;
+    outline: none;
+  }
+
+  .form-row input:focus, .form-row select:focus {
+    border-color: var(--sage);
+  }
+
+  .form-row-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .btn-add {
+    background: var(--sage-dark);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: background 0.2s;
+    margin-top: 4px;
+  }
+  .btn-add:hover { background: var(--sage); }
+
+  /* CATEGORIES */
+  .categories {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .cat-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-size: 0.85rem;
+  }
+  .cat-item:hover { background: var(--cream); }
+  .cat-item.active { background: var(--cream); font-weight: 600; }
+
+  .cat-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .cat-count {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--mid-gray);
+    background: var(--light-gray);
+    padding: 1px 7px;
+    border-radius: 10px;
+  }
+
+  /* MAIN CONTENT */
+  .main {
+    overflow-y: auto;
+    padding: 28px 32px;
+    background: var(--cream);
+  }
+
+  .main-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .main-header h2 {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 1.6rem;
+    color: var(--charcoal);
+  }
+
+  .view-toggle {
+    display: flex;
+    background: var(--warm-white);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
+    border: 1px solid var(--light-gray);
+  }
+
+  .view-btn {
+    background: none;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--mid-gray);
+    transition: all 0.15s;
+  }
+  .view-btn.active {
+    background: var(--sage-dark);
+    color: white;
+  }
+
+  /* WEEK VIEW */
+  .week-view {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .week-day-col {
+    background: var(--warm-white);
+    border-radius: 12px;
+    padding: 12px 8px;
+    min-height: 180px;
+    border: 1px solid var(--light-gray);
+    transition: box-shadow 0.15s;
+  }
+
+  .week-day-col:hover { box-shadow: 0 2px 8px var(--shadow); }
+  .week-day-col.today-col { border-color: var(--sage); border-width: 2px; }
+
+  .week-day-name {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--mid-gray);
+    margin-bottom: 4px;
+  }
+
+  .week-day-num {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 1.4rem;
+    color: var(--charcoal);
+    margin-bottom: 8px;
+    line-height: 1;
+  }
+
+  .today-col .week-day-num { color: var(--sage-dark); }
+
+  /* TASK CHIPS */
+  .task-chip {
+    background: var(--sage-light);
+    color: var(--sage-dark);
+    border-radius: 6px;
+    padding: 5px 7px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    margin-bottom: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    word-break: break-word;
+    position: relative;
+  }
+
+  .task-chip:hover { filter: brightness(0.95); }
+  .task-chip.done { opacity: 0.45; text-decoration: line-through; }
+
+  .task-chip .cat-indicator {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .task-chip .task-actions {
+    margin-left: auto;
+    display: none;
+    gap: 2px;
+  }
+  .task-chip:hover .task-actions { display: flex; }
+
+  .task-action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.7rem;
+    padding: 1px 3px;
+    border-radius: 3px;
+    opacity: 0.7;
+    transition: opacity 0.1s;
+  }
+  .task-action-btn:hover { opacity: 1; background: rgba(0,0,0,0.08); }
+
+  /* LIST VIEW */
+  .list-view { display: none; }
+
+  .list-view.active { display: block; }
+  .week-view.active { display: grid; }
+  .week-view:not(.active) { display: none; }
+
+  .task-list-group { margin-bottom: 20px; }
+
+  .task-list-date {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--mid-gray);
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--light-gray);
+  }
+
+  .task-list-item {
+    background: var(--warm-white);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid var(--light-gray);
+    cursor: pointer;
+    transition: box-shadow 0.15s;
+  }
+  .task-list-item:hover { box-shadow: 0 2px 8px var(--shadow); }
+  .task-list-item.done { opacity: 0.5; }
+
+  .check-circle {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--light-gray);
+    flex-shrink: 0;
+    transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem;
+    color: white;
+  }
+  .task-list-item.done .check-circle {
+    background: var(--sage);
+    border-color: var(--sage);
+  }
+
+  .task-list-info { flex: 1; }
+  .task-list-name { font-size: 0.9rem; font-weight: 500; }
+  .task-list-meta { font-size: 0.76rem; color: var(--mid-gray); margin-top: 2px; }
+
+  .task-list-badge {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+
+  .del-btn-list {
+    background: none;
+    border: none;
+    color: var(--mid-gray);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 2px 5px;
+    border-radius: 4px;
+    opacity: 0.5;
+    transition: opacity 0.1s;
+  }
+  .del-btn-list:hover { opacity: 1; color: var(--terracotta); }
+
+  /* OVERDUE BANNER */
+  .overdue-banner {
+    background: linear-gradient(135deg, #E8D5C4, #F0E0D0);
+    border: 1px solid var(--terracotta-light);
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .overdue-banner .ob-icon { font-size: 1.4rem; }
+  .overdue-banner .ob-text { font-size: 0.85rem; }
+  .overdue-banner .ob-text strong { color: var(--terracotta); }
+
+  /* OFFLINE BANNER */
+  #offlineBanner {
+    display: none;
+    background: var(--terracotta);
+    color: white;
+    text-align: center;
+    padding: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  /* TOAST */
+  #toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--charcoal);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all 0.25s;
+    z-index: 999;
+    max-width: 300px;
+    pointer-events: none;
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+
+  /* EMPTY STATE */
+  .empty-day {
+    font-size: 0.72rem;
+    color: var(--light-gray);
+    font-style: italic;
+    padding: 4px 0;
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--light-gray); border-radius: 10px; }
+
+  @media (max-width: 768px) {
+    .app { grid-template-columns: 1fr; height: auto; }
+    .sidebar { display: none; }
+    .week-view { grid-template-columns: repeat(3, 1fr); }
+    header { padding: 14px 16px; }
+    header h1 { font-size: 1.3rem; }
+    .main { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="offlineBanner">Je bent offline — de app werkt nog steeds!</div>
+
+<header>
+  <div>
+    <h1>🏡 Huishoud Kalender</h1>
+    <div class="subtitle">Jouw slimme taakplanner voor thuis</div>
+  </div>
+  <div class="header-right">
+    <button class="notif-btn" id="installBtn" onclick="installApp()" style="display:none">
+      📲 Installeer app
+    </button>
+    <button class="notif-btn" id="notifBtn" onclick="toggleNotifications()">
+      🔔 Notificaties inschakelen
+    </button>
+  </div>
+</header>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div>
+      <div class="section-title">Navigeer</div>
+      <div class="mini-cal">
+        <div class="mini-cal-header">
+          <button class="mini-cal-nav" onclick="changeMonth(-1)">‹</button>
+          <span id="miniCalTitle"></span>
+          <button class="mini-cal-nav" onclick="changeMonth(1)">›</button>
+        </div>
+        <div class="mini-cal-grid" id="miniCalGrid"></div>
+      </div>
+    </div>
+
+    <div class="add-task-section">
+      <div class="section-title">Taak toevoegen</div>
+      <div class="task-form">
+        <div class="form-row">
+          <label>Taaknaam</label>
+          <input type="text" id="taskName" placeholder="bijv. Stofzuigen" />
+        </div>
+        <div class="form-row-grid">
+          <div class="form-row">
+            <label>Datum</label>
+            <input type="date" id="taskDate" />
+          </div>
+          <div class="form-row">
+            <label>Tijd</label>
+            <input type="time" id="taskTime" value="09:00" />
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Categorie</label>
+          <select id="taskCategory">
+            <option value="schoonmaken">🧹 Schoonmaken</option>
+            <option value="koken">🍳 Koken & boodschappen</option>
+            <option value="tuin">🌿 Tuin & buiten</option>
+            <option value="was">👕 Was & strijken</option>
+            <option value="onderhoud">🔧 Onderhoud</option>
+            <option value="overig">📋 Overig</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Herhaling</label>
+          <select id="taskRepeat">
+            <option value="none">Geen herhaling</option>
+            <option value="daily">Dagelijks</option>
+            <option value="weekly">Wekelijks</option>
+            <option value="biweekly">Elke 2 weken</option>
+            <option value="monthly">Maandelijks</option>
+          </select>
+        </div>
+        <button class="btn-add" onclick="addTask()">+ Taak toevoegen</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">Categorieën</div>
+      <div class="categories" id="categoryList"></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="main-header">
+      <h2 id="mainTitle">Deze week</h2>
+      <div class="view-toggle">
+        <button class="view-btn active" onclick="setView('week', this)">Week</button>
+        <button class="view-btn" onclick="setView('list', this)">Lijst</button>
+      </div>
+    </div>
+
+    <div id="overdueBanner" class="overdue-banner" style="display:none">
+      <span class="ob-icon">⚠️</span>
+      <div class="ob-text">Je hebt <strong id="overdueCount">0</strong> verlopen taken. Vergeet ze niet af te ronden!</div>
+    </div>
+
+    <div class="week-view active" id="weekView"></div>
+    <div class="list-view" id="listView"></div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────
+let tasks = JSON.parse(localStorage.getItem('huishouden_tasks') || '[]');
+let notificationsEnabled = false;
+let currentView = 'week';
+let selectedDate = null;
+let miniCalMonth = new Date().getMonth();
+let miniCalYear = new Date().getFullYear();
+let filterCat = 'all';
+let notifIntervalId = null;
+
+// ─── CATEGORIES ──────────────────────────────────────────
+const categories = {
+  schoonmaken: { label: 'Schoonmaken',        emoji: '🧹', color: '#7C9E8A' },
+  koken:       { label: 'Koken & boodschappen', emoji: '🍳', color: '#C4714A' },
+  tuin:        { label: 'Tuin & buiten',       emoji: '🌿', color: '#5A8A4A' },
+  was:         { label: 'Was & strijken',      emoji: '👕', color: '#5B7FA6' },
+  onderhoud:   { label: 'Onderhoud',           emoji: '🔧', color: '#8A6FA0' },
+  overig:      { label: 'Overig',              emoji: '📋', color: '#A08060' },
+};
+
+// ─── DEFAULT TASKS ────────────────────────────────────────
+function seedDefaultTasks() {
+  if (tasks.length > 0) return;
+  const today = new Date();
+  const fmt = d => d.toISOString().split('T')[0];
+  const defaults = [
+    { name: 'Stofzuigen woonkamer', cat: 'schoonmaken', offsetDays: 0,  time: '10:00', repeat: 'weekly'    },
+    { name: 'Boodschappen doen',    cat: 'koken',       offsetDays: 1,  time: '11:00', repeat: 'weekly'    },
+    { name: 'Was draaien',          cat: 'was',         offsetDays: 0,  time: '08:00', repeat: 'biweekly'  },
+    { name: 'Tuin sproeien',        cat: 'tuin',        offsetDays: 2,  time: '07:00', repeat: 'daily'     },
+    { name: 'Badkamer schoonmaken', cat: 'schoonmaken', offsetDays: 3,  time: '10:00', repeat: 'weekly'    },
+    { name: 'Afval buiten zetten',  cat: 'overig',      offsetDays: 4,  time: '07:30', repeat: 'weekly'    },
+    { name: 'Keuken afstoffen',     cat: 'schoonmaken', offsetDays: -1, time: '09:00', repeat: 'weekly'    },
+  ];
+  defaults.forEach(d => {
+    const date = new Date(today);
+    date.setDate(date.getDate() + d.offsetDays);
+    tasks.push({ id: Date.now() + Math.random(), name: d.name, date: fmt(date), time: d.time, category: d.cat, repeat: d.repeat, done: false });
+  });
+  saveTasks();
+}
+
+// ─── SAVE ─────────────────────────────────────────────────
+function saveTasks() {
+  localStorage.setItem('huishouden_tasks', JSON.stringify(tasks));
+}
+
+// ─── NOTIFICATIONS ────────────────────────────────────────
+async function toggleNotifications() {
+  if (notificationsEnabled) {
+    notificationsEnabled = false;
+    clearInterval(notifIntervalId);
+    document.getElementById('notifBtn').textContent = '🔔 Notificaties inschakelen';
+    document.getElementById('notifBtn').classList.remove('active');
+    showToast('Notificaties uitgeschakeld');
+    return;
+  }
+  if (!('Notification' in window)) { showToast('Je browser ondersteunt geen notificaties'); return; }
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    notificationsEnabled = true;
+    document.getElementById('notifBtn').innerHTML = '✅ Notificaties aan';
+    document.getElementById('notifBtn').classList.add('active');
+    showToast('Notificaties ingeschakeld!');
+    notifIntervalId = setInterval(checkTasksNow, 60000);
+    checkTasksNow();
+  } else {
+    showToast('Notificaties geweigerd. Controleer je browserinstellingen.');
+  }
+}
+
+function checkTasksNow() {
+  if (!notificationsEnabled) return;
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  const nowTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  tasks.forEach(task => {
+    if (!task.done && task.date === todayStr && task.time === nowTime) {
+      new Notification('🏡 Huishoudtaak herinnering', {
+        body: `${categories[task.category]?.emoji || '📋'} ${task.name} — nu uitvoeren!`,
+        icon: './icon.svg'
+      });
+    }
+  });
+}
+
+function notify10Before() {
+  if (!notificationsEnabled) return;
+  const in10 = new Date(Date.now() + 10 * 60000);
+  const dateStr = in10.toISOString().split('T')[0];
+  const timeStr = `${String(in10.getHours()).padStart(2,'0')}:${String(in10.getMinutes()).padStart(2,'0')}`;
+  tasks.forEach(task => {
+    if (!task.done && task.date === dateStr && task.time === timeStr) {
+      new Notification('⏰ Over 10 minuten', { body: `${task.name} staat gepland om ${task.time}`, icon: './icon.svg' });
+    }
+  });
+}
+setInterval(notify10Before, 60000);
+
+// ─── TASKS CRUD ────────────────────────────────────────────
+function addTask() {
+  const name = document.getElementById('taskName').value.trim();
+  const date = document.getElementById('taskDate').value;
+  const time = document.getElementById('taskTime').value;
+  const cat  = document.getElementById('taskCategory').value;
+  const rep  = document.getElementById('taskRepeat').value;
+  if (!name || !date) { showToast('Vul een naam en datum in'); return; }
+  tasks.push({ id: Date.now(), name, date, time, category: cat, repeat: rep, done: false });
+  saveTasks();
+  document.getElementById('taskName').value = '';
+  showToast(`"${name}" toegevoegd!`);
+  render();
+}
+
+function toggleDone(id) {
+  const t = tasks.find(t => t.id === id);
+  if (!t) return;
+  t.done = !t.done;
+  saveTasks();
+  if (t.done) showToast(`✅ "${t.name}" afgerond!`);
+  render();
+}
+
+function deleteTask(id) {
+  const t = tasks.find(t => t.id === id);
+  if (!t) return;
+  tasks = tasks.filter(t => t.id !== id);
+  saveTasks();
+  showToast(`"${t.name}" verwijderd`);
+  render();
+}
+
+// ─── RENDER ───────────────────────────────────────────────
+function render() {
+  renderMiniCal();
+  renderCategoryList();
+  renderWeekView();
+  renderListView();
+  renderOverdue();
+}
+
+function getWeekDates() {
+  const today = new Date();
+  const mon = new Date(today);
+  mon.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+  return Array.from({length: 7}, (_, i) => { const d = new Date(mon); d.setDate(mon.getDate() + i); return d; });
+}
+
+function fmtDate(d) { return d.toISOString().split('T')[0]; }
+
+const DAY_NAMES = ['Ma','Di','Wo','Do','Vr','Za','Zo'];
+
+function renderWeekView() {
+  const wv = document.getElementById('weekView');
+  const week = getWeekDates();
+  const todayStr = fmtDate(new Date());
+  wv.innerHTML = week.map((d, i) => {
+    const dStr = fmtDate(d);
+    const dayTasks = tasks.filter(t => t.date === dStr && (filterCat === 'all' || t.category === filterCat));
+    return `<div class="week-day-col ${dStr === todayStr ? 'today-col' : ''}">
+      <div class="week-day-name">${DAY_NAMES[i]}</div>
+      <div class="week-day-num">${d.getDate()}</div>
+      ${dayTasks.length === 0 ? '<div class="empty-day">vrij</div>' : ''}
+      ${dayTasks.map(t => `
+        <div class="task-chip ${t.done ? 'done' : ''}" onclick="toggleDone(${t.id})">
+          <span class="cat-indicator" style="background:${categories[t.category]?.color || '#999'}"></span>
+          <span style="flex:1;min-width:0">${t.name}</span>
+          <div class="task-actions">
+            <button class="task-action-btn" onclick="event.stopPropagation();deleteTask(${t.id})" title="Verwijderen">✕</button>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+function renderListView() {
+  const lv = document.getElementById('listView');
+  const sorted = [...tasks]
+    .filter(t => filterCat === 'all' || t.category === filterCat)
+    .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+  const grouped = {};
+  sorted.forEach(t => { if (!grouped[t.date]) grouped[t.date] = []; grouped[t.date].push(t); });
+  if (Object.keys(grouped).length === 0) {
+    lv.innerHTML = '<div style="color:var(--mid-gray);font-style:italic;padding:20px 0">Geen taken gevonden</div>';
+    return;
+  }
+  const todayStr = fmtDate(new Date());
+  lv.innerHTML = Object.entries(grouped).map(([date, dayTasks]) => {
+    const d = new Date(date + 'T12:00:00');
+    const label = date === todayStr ? 'Vandaag' : d.toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' });
+    return `<div class="task-list-group">
+      <div class="task-list-date">${label}</div>
+      ${dayTasks.map(t => {
+        const cat = categories[t.category] || {};
+        return `<div class="task-list-item ${t.done ? 'done' : ''}" onclick="toggleDone(${t.id})">
+          <div class="check-circle">${t.done ? '✓' : ''}</div>
+          <div class="task-list-info">
+            <div class="task-list-name">${cat.emoji || ''} ${t.name}</div>
+            <div class="task-list-meta">${t.time} · ${cat.label || t.category}${t.repeat !== 'none' ? ' · herhalend' : ''}</div>
+          </div>
+          <span class="task-list-badge" style="background:${cat.color}22;color:${cat.color}">${cat.label || t.category}</span>
+          <button class="del-btn-list" onclick="event.stopPropagation();deleteTask(${t.id})" title="Verwijderen">🗑</button>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+}
+
+function renderCategoryList() {
+  const el = document.getElementById('categoryList');
+  const all = [['all', { label: 'Alles', emoji: '🏠', color: '#7C9E8A' }], ...Object.entries(categories)];
+  el.innerHTML = all.map(([key, cat]) => {
+    const count = key === 'all' ? tasks.length : tasks.filter(t => t.category === key).length;
+    return `<div class="cat-item ${filterCat === key ? 'active' : ''}" onclick="setFilter('${key}')">
+      <span class="cat-dot" style="background:${cat.color}"></span>
+      <span>${cat.emoji} ${cat.label}</span>
+      <span class="cat-count">${count}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderOverdue() {
+  const todayStr = fmtDate(new Date());
+  const overdue = tasks.filter(t => !t.done && t.date < todayStr);
+  const banner = document.getElementById('overdueBanner');
+  if (overdue.length > 0) {
+    banner.style.display = 'flex';
+    document.getElementById('overdueCount').textContent = overdue.length;
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+// ─── MINI CAL ─────────────────────────────────────────────
+function renderMiniCal() {
+  const grid = document.getElementById('miniCalGrid');
+  const title = document.getElementById('miniCalTitle');
+  const months = ['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
+  title.textContent = `${months[miniCalMonth]} ${miniCalYear}`;
+  const dayNames = ['Ma','Di','Wo','Do','Vr','Za','Zo'];
+  let html = dayNames.map(d => `<div class="day-name">${d}</div>`).join('');
+  const first = new Date(miniCalYear, miniCalMonth, 1);
+  const startDow = (first.getDay() + 6) % 7;
+  const daysInMonth = new Date(miniCalYear, miniCalMonth + 1, 0).getDate();
+  const todayStr = fmtDate(new Date());
+  for (let i = 0; i < startDow; i++) html += '<div></div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${miniCalYear}-${String(miniCalMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = dateStr === todayStr;
+    const isSel = dateStr === selectedDate;
+    const hasTask = tasks.some(t => t.date === dateStr);
+    html += `<div class="cal-day ${isToday?'today':''} ${isSel?'selected':''} ${hasTask?'has-task':''}" onclick="selectDate('${dateStr}')">${d}</div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function changeMonth(dir) {
+  miniCalMonth += dir;
+  if (miniCalMonth > 11) { miniCalMonth = 0; miniCalYear++; }
+  if (miniCalMonth < 0)  { miniCalMonth = 11; miniCalYear--; }
+  renderMiniCal();
+}
+
+function selectDate(dateStr) {
+  selectedDate = dateStr;
+  document.getElementById('taskDate').value = dateStr;
+  renderMiniCal();
+}
+
+// ─── UTILS ────────────────────────────────────────────────
+function setView(view, btn) {
+  currentView = view;
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('weekView').classList.toggle('active', view === 'week');
+  document.getElementById('listView').classList.toggle('active', view === 'list');
+}
+
+function setFilter(cat) { filterCat = cat; render(); }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ─── PWA ─────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
+}
+
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBtn').style.display = 'flex';
+});
+
+function installApp() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(() => {
+    deferredPrompt = null;
+    document.getElementById('installBtn').style.display = 'none';
+  });
+}
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('installBtn').style.display = 'none';
+  showToast('App geïnstalleerd op je beginscherm!');
+});
+
+// Offline/online detectie
+window.addEventListener('offline', () => { document.getElementById('offlineBanner').style.display = 'block'; });
+window.addEventListener('online',  () => { document.getElementById('offlineBanner').style.display = 'none'; showToast('Weer online!'); });
+
+// iOS: handmatige installatie-hint (eenmalig)
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+if (isIOS && !isStandalone && !localStorage.getItem('ios_hint_shown')) {
+  setTimeout(() => {
+    showToast('Tip voor iPhone: tik op Delen → "Zet op beginscherm" om de app te installeren');
+    localStorage.setItem('ios_hint_shown', '1');
+  }, 2500);
+}
+
+// ─── INIT ─────────────────────────────────────────────────
+document.getElementById('taskDate').value = fmtDate(new Date());
+document.getElementById('mainTitle').textContent =
+  new Date().toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' });
+
+seedDefaultTasks();
+render();
+
+setInterval(() => { if (notificationsEnabled) checkTasksNow(); }, 60000);
+</script>
+</body>
+</html>
