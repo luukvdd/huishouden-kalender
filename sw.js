@@ -1,5 +1,8 @@
-const CACHE = 'huishouden-v1';
-const LOCAL = ['./index.html', './manifest.json', './sw.js', './icon.svg'];
+const CACHE = 'thuis-v2';
+const LOCAL = [
+  './index.html', './kalender.html', './boodschappen.html',
+  './manifest.json', './sw.js', './icon.svg', './taken.csv'
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -25,12 +28,10 @@ self.addEventListener('fetch', e => {
   const isSameOrigin = url.origin === self.location.origin;
 
   if (isSameOrigin) {
-    // Cache-first voor lokale bestanden
     e.respondWith(
       caches.match(e.request).then(cached => cached || fetch(e.request))
     );
   } else {
-    // Network-first met cache-fallback voor externe bronnen (fonts)
     e.respondWith(
       fetch(e.request)
         .then(res => {
@@ -43,7 +44,6 @@ self.addEventListener('fetch', e => {
   }
 });
 
-// Notificaties vanuit de service worker tonen
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   e.waitUntil(clients.matchAll({ type: 'window' }).then(list => {

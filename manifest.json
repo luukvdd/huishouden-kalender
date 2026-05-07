@@ -1,7 +1,7 @@
 {
-  "name": "Huishoud Kalender",
-  "short_name": "Kalender",
-  "description": "Jouw slimme taakplanner voor thuis",
+  "name": "Thuis Apps",
+  "short_name": "Thuis",
+  "description": "Huishoud kalender en boodschappenlijst",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#F5F0E8",

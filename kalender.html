@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Huishoud Kalender</title>
+<meta name="theme-color" content="#4A6B57">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Huishoud Kalender">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#F5F0E8;--warm-white:#FDFAF5;
+  --sage:#7C9E8A;--sage-light:#A8C4B4;--sage-dark:#4A6B57;
+  --terracotta:#C4714A;--terracotta-light:#E8A882;
+  --charcoal:#2C2C2C;--mid-gray:#6B6B6B;--light-gray:#E0DAD0;
+  --shadow:rgba(44,44,44,.08);--shadow-md:rgba(44,44,44,.14);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--cream);color:var(--charcoal);min-height:100vh;}
+#offlineBanner{display:none;background:var(--terracotta);color:white;text-align:center;padding:6px;font-size:.8rem;font-weight:500;}
+
+/* ── HEADER ── */
+header{background:var(--sage-dark);color:var(--warm-white);padding:12px 22px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px var(--shadow-md);position:sticky;top:0;z-index:50;gap:10px;}
+.header-left h1{font-family:'DM Serif Display',Georgia,serif;font-size:1.5rem;letter-spacing:-.01em;}
+.header-left .subtitle{font-size:.7rem;opacity:.7;font-weight:300;margin-top:1px;}
+.header-right{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+.hdr-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:white;padding:6px 12px;border-radius:22px;cursor:pointer;font-family:inherit;font-size:.74rem;font-weight:500;transition:all .2s;display:flex;align-items:center;gap:5px;white-space:nowrap;text-decoration:none;}
+.hdr-btn:hover{background:rgba(255,255,255,.28);}
+.hdr-btn.active{background:var(--terracotta);border-color:var(--terracotta);}
+
+/* ── PROFILE SELECTOR ── */
+.profile-selector{position:relative;}
+.profile-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:var(--warm-white);border-radius:12px;box-shadow:0 6px 24px rgba(44,44,44,.18);min-width:200px;z-index:300;padding:8px;display:none;}
+.profile-dropdown.open{display:block;}
+.profile-list-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:.83rem;color:var(--charcoal);transition:background .15s;}
+.profile-list-item:hover{background:var(--cream);}
+.profile-list-item.current{font-weight:600;background:var(--cream);}
+.profile-divider{height:1px;background:var(--light-gray);margin:4px 0;}
+.profile-new-btn{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:.83rem;color:var(--sage-dark);font-weight:500;transition:background .15s;border:none;background:none;width:100%;font-family:inherit;}
+.profile-new-btn:hover{background:var(--cream);}
+
+/* ── LAYOUT ── */
+.app{display:grid;grid-template-columns:285px 1fr;height:calc(100vh - 60px);}
+
+/* ── SIDEBAR ── */
+.sidebar{background:var(--warm-white);border-right:1px solid var(--light-gray);overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px;}
+.section-title{font-family:'DM Serif Display',Georgia,serif;font-size:.9rem;color:var(--sage-dark);margin-bottom:7px;}
+
+/* ── MINI CAL ── */
+.mini-cal{background:var(--cream);border-radius:12px;padding:12px;}
+.mini-cal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;}
+.mini-cal-title{font-weight:600;font-size:.84rem;cursor:pointer;padding:2px 6px;border-radius:6px;transition:background .15s;user-select:none;}
+.mini-cal-title:hover{background:var(--light-gray);}
+.mini-cal-nav{background:none;border:none;cursor:pointer;font-size:.95rem;color:var(--sage-dark);padding:2px 6px;border-radius:4px;transition:background .15s;}
+.mini-cal-nav:hover{background:var(--light-gray);}
+.mini-cal-grid{display:grid;grid-template-columns:auto repeat(7,1fr);gap:2px;text-align:center;}
+.wk-label{font-size:.56rem;font-weight:700;color:var(--light-gray);padding:3px 2px;text-transform:uppercase;}
+.wk-num{font-size:.58rem;color:var(--light-gray);padding:4px 2px;display:flex;align-items:center;justify-content:center;font-weight:600;}
+.day-name{font-size:.58rem;font-weight:700;color:var(--mid-gray);padding:3px 0;text-transform:uppercase;letter-spacing:.05em;}
+.cal-day{font-size:.72rem;padding:4px 1px;border-radius:5px;cursor:pointer;transition:background .15s;position:relative;}
+.cal-day:hover{background:var(--light-gray);}
+.cal-day.today{background:var(--sage);color:white;font-weight:600;}
+.cal-day.selected{background:var(--sage-dark);color:white;font-weight:600;}
+.cal-day.in-week{background:rgba(74,107,87,.1);}
+.cal-day.has-task::after{content:'';position:absolute;bottom:1px;left:50%;transform:translateX(-50%);width:3px;height:3px;border-radius:50%;background:var(--terracotta);}
+.cal-day.today.has-task::after,.cal-day.selected.has-task::after{background:white;}
+.cal-day.other-month{color:var(--light-gray);}
+
+/* ── MONTH PICKER ── */
+.month-picker{background:var(--warm-white);border:1px solid var(--light-gray);border-radius:10px;padding:10px;margin-top:6px;display:none;}
+.month-picker.open{display:block;}
+.mp-year{display:flex;align-items:center;justify-content:space-between;font-weight:600;font-size:.82rem;margin-bottom:7px;}
+.mp-year button{background:none;border:none;cursor:pointer;font-size:.95rem;color:var(--sage-dark);padding:2px 7px;border-radius:4px;}
+.mp-year button:hover{background:var(--light-gray);}
+.mp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;}
+.mp-btn{background:none;border:none;border-radius:6px;padding:5px 2px;cursor:pointer;font-family:inherit;font-size:.73rem;transition:background .15s;}
+.mp-btn:hover{background:var(--cream);}
+.mp-btn.active{background:var(--sage-dark);color:white;}
+
+/* ── TASK FORM ── */
+.task-form{background:var(--cream);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:7px;}
+.form-row{display:flex;flex-direction:column;gap:3px;}
+.form-row label{font-size:.64rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--mid-gray);}
+.form-row input,.form-row select,.form-row textarea{background:var(--warm-white);border:1px solid var(--light-gray);border-radius:7px;padding:7px 9px;font-family:inherit;font-size:.8rem;color:var(--charcoal);transition:border-color .15s;outline:none;resize:vertical;}
+.form-row textarea{min-height:52px;}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--sage);}
+.form-row-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.btn-add{background:var(--sage-dark);color:white;border:none;padding:8px;border-radius:7px;cursor:pointer;font-family:inherit;font-size:.82rem;font-weight:600;transition:background .2s;margin-top:2px;}
+.btn-add:hover{background:var(--sage);}
+
+/* ── CATEGORIES ── */
+.categories{display:flex;flex-direction:column;gap:3px;}
+.cat-item{display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:7px;cursor:pointer;transition:background .15s;font-size:.8rem;}
+.cat-item:hover{background:var(--cream);}
+.cat-item.active{background:var(--cream);font-weight:600;}
+.cat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.cat-count{margin-left:auto;font-size:.68rem;color:var(--mid-gray);background:var(--light-gray);padding:1px 6px;border-radius:10px;}
+
+/* ── MAIN ── */
+.main{overflow-y:auto;padding:20px 24px;background:var(--cream);}
+.main-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px;flex-wrap:wrap;}
+.week-nav{display:flex;align-items:center;gap:7px;}
+.week-nav h2{font-family:'DM Serif Display',Georgia,serif;font-size:1.3rem;color:var(--charcoal);white-space:nowrap;}
+.week-nav-btn{background:var(--warm-white);border:1px solid var(--light-gray);color:var(--sage-dark);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
+.week-nav-btn:hover{background:var(--sage-dark);color:white;border-color:var(--sage-dark);}
+.view-toggle{display:flex;background:var(--warm-white);border-radius:7px;padding:3px;gap:2px;border:1px solid var(--light-gray);}
+.view-btn{background:none;border:none;padding:5px 14px;border-radius:5px;cursor:pointer;font-family:inherit;font-size:.76rem;font-weight:500;color:var(--mid-gray);transition:all .15s;white-space:nowrap;}
+.view-btn.active{background:var(--sage-dark);color:white;}
+
+/* ── WEEK VIEW ── */
+.week-view{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+.week-day-col{background:var(--warm-white);border-radius:10px;padding:8px 6px;min-height:145px;border:1px solid var(--light-gray);transition:box-shadow .15s;}
+.week-day-col:hover{box-shadow:0 2px 8px var(--shadow);}
+.week-day-col.today-col{border-color:var(--sage);border-width:2px;}
+.week-day-name{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mid-gray);margin-bottom:2px;}
+.week-day-num{font-family:'DM Serif Display',Georgia,serif;font-size:1.2rem;color:var(--charcoal);margin-bottom:5px;line-height:1;}
+.today-col .week-day-num{color:var(--sage-dark);}
+.week-add-btn{display:block;width:100%;background:none;border:1px dashed var(--light-gray);border-radius:5px;padding:3px;cursor:pointer;font-size:.62rem;color:var(--light-gray);transition:all .15s;margin-top:3px;text-align:center;}
+.week-add-btn:hover{border-color:var(--sage);color:var(--sage-dark);background:rgba(124,158,138,.06);}
+
+/* ── TASK CHIPS ── */
+.task-chip{background:var(--sage-light);color:var(--sage-dark);border-radius:5px;padding:3px 5px;font-size:.66rem;font-weight:500;margin-bottom:3px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:3px;position:relative;}
+.task-chip:hover{filter:brightness(.94);}
+.task-chip.done{opacity:.38;text-decoration:line-through;}
+.chip-check{background:none;border:none;cursor:pointer;font-size:.66rem;color:var(--sage-dark);flex-shrink:0;padding:0 2px;opacity:.55;transition:opacity .1s;}
+.chip-check:hover{opacity:1;}
+.cat-indicator{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.task-chip .task-actions{margin-left:auto;display:none;gap:1px;flex-shrink:0;}
+.task-chip:hover .task-actions{display:flex;}
+.task-action-btn{background:none;border:none;cursor:pointer;font-size:.62rem;padding:1px 3px;border-radius:3px;opacity:.55;transition:opacity .1s;}
+.task-action-btn:hover{opacity:1;background:rgba(0,0,0,.08);}
+
+/* ── LIST VIEW ── */
+.list-view{display:none;}
+.list-view.active{display:block;}
+.week-view.active{display:grid;}
+.week-view:not(.active){display:none;}
+.task-list-group{margin-bottom:15px;}
+.task-list-date{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mid-gray);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--light-gray);display:flex;align-items:center;gap:8px;}
+.task-list-item{background:var(--warm-white);border-radius:9px;padding:10px 12px;margin-bottom:4px;display:flex;align-items:center;gap:10px;border:1px solid var(--light-gray);cursor:pointer;transition:box-shadow .15s;}
+.task-list-item:hover{box-shadow:0 2px 8px var(--shadow);}
+.task-list-item.done{opacity:.42;}
+.check-circle{width:18px;height:18px;border-radius:50%;border:2px solid var(--light-gray);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.58rem;color:white;transition:all .15s;cursor:pointer;}
+.task-list-item.done .check-circle{background:var(--sage);border-color:var(--sage);}
+.task-list-info{flex:1;min-width:0;}
+.task-list-name{font-size:.84rem;font-weight:500;}
+.task-list-meta{font-size:.69rem;color:var(--mid-gray);margin-top:2px;}
+.task-list-desc{font-size:.69rem;color:var(--mid-gray);font-style:italic;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.task-list-badge{font-size:.65rem;padding:2px 7px;border-radius:10px;font-weight:500;white-space:nowrap;flex-shrink:0;}
+.del-btn-list{background:none;border:none;color:var(--mid-gray);cursor:pointer;font-size:.88rem;padding:2px 4px;border-radius:4px;opacity:.35;transition:opacity .1s;flex-shrink:0;}
+.del-btn-list:hover{opacity:1;color:var(--terracotta);}
+
+/* ── OVERDUE BANNER ── */
+.overdue-banner{background:linear-gradient(135deg,#E8D5C4,#F0E0D0);border:1px solid var(--terracotta-light);border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:9px;}
+.overdue-banner .ob-icon{font-size:1.1rem;}
+.overdue-banner .ob-text{font-size:.8rem;}
+.overdue-banner .ob-text strong{color:var(--terracotta);}
+
+/* ── OVERVIEW PAGE (FULL SCREEN) ── */
+.overview-page{position:fixed;inset:0;background:var(--cream);z-index:150;display:none;flex-direction:column;}
+.overview-page.open{display:flex;}
+.overview-page-header{background:var(--sage-dark);color:white;padding:12px 22px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 2px 12px var(--shadow-md);flex-shrink:0;}
+.ov-back-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:white;padding:6px 12px;border-radius:22px;cursor:pointer;font-family:inherit;font-size:.76rem;font-weight:500;transition:all .2s;display:flex;align-items:center;gap:5px;}
+.ov-back-btn:hover{background:rgba(255,255,255,.28);}
+.ov-title{font-family:'DM Serif Display',Georgia,serif;font-size:1.3rem;flex:1;}
+.overview-filters{background:var(--warm-white);border-bottom:1px solid var(--light-gray);padding:12px 22px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0;}
+.ov-filter-label{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--mid-gray);}
+.ov-select{background:var(--cream);border:1px solid var(--light-gray);border-radius:7px;padding:6px 10px;font-family:inherit;font-size:.8rem;color:var(--charcoal);outline:none;cursor:pointer;transition:border-color .15s;}
+.ov-select:focus{border-color:var(--sage);}
+.ov-search{background:var(--cream);border:1px solid var(--light-gray);border-radius:7px;padding:6px 10px;font-family:inherit;font-size:.8rem;color:var(--charcoal);outline:none;transition:border-color .15s;min-width:180px;}
+.ov-search:focus{border-color:var(--sage);}
+.ov-spacer{flex:1;}
+.overview-body{flex:1;overflow-y:auto;padding:20px 22px;}
+.ov-empty{color:var(--mid-gray);font-style:italic;padding:20px 0;}
+
+/* ── TASK MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(44,44,44,.48);display:none;align-items:center;justify-content:center;z-index:200;padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal-card{background:var(--warm-white);border-radius:16px;width:100%;max-width:450px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(44,44,44,.22);display:flex;flex-direction:column;}
+.modal-top{display:flex;align-items:center;justify-content:space-between;padding:15px 17px 0;}
+.modal-top h3{font-family:'DM Serif Display',Georgia,serif;font-size:1.1rem;color:var(--charcoal);}
+.modal-close{background:var(--light-gray);border:none;border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:.8rem;display:flex;align-items:center;justify-content:center;color:var(--mid-gray);transition:background .15s;flex-shrink:0;}
+.modal-close:hover{background:var(--terracotta-light);}
+.modal-body{padding:12px 17px;display:flex;flex-direction:column;gap:9px;flex:1;}
+.modal-repeat-note{font-size:.7rem;color:var(--mid-gray);font-style:italic;padding:5px 17px 0;}
+.modal-done-row{display:flex;align-items:center;gap:9px;padding:7px 9px;background:var(--cream);border-radius:7px;cursor:pointer;font-size:.82rem;font-weight:500;user-select:none;}
+.modal-done-row input[type="checkbox"]{width:14px;height:14px;accent-color:var(--sage);cursor:pointer;}
+.modal-footer{display:flex;gap:7px;padding:0 17px 15px;}
+.btn-danger{background:none;border:1px solid var(--terracotta-light);color:var(--terracotta);padding:8px 11px;border-radius:7px;cursor:pointer;font-family:inherit;font-size:.78rem;font-weight:600;transition:all .2s;}
+.btn-danger:hover{background:var(--terracotta);color:white;}
+.btn-save{flex:1;background:var(--sage-dark);color:white;border:none;padding:8px;border-radius:7px;cursor:pointer;font-family:inherit;font-size:.82rem;font-weight:600;transition:background .2s;}
+.btn-save:hover{background:var(--sage);}
+
+/* ── PROFILE MODAL ── */
+.emoji-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-top:4px;}
+.emoji-btn{background:none;border:2px solid transparent;border-radius:7px;padding:4px;cursor:pointer;font-size:1.2rem;transition:all .15s;text-align:center;}
+.emoji-btn:hover{background:var(--cream);}
+.emoji-btn.selected{border-color:var(--sage-dark);background:var(--cream);}
+
+/* ── MOBILE FAB ── */
+.mobile-fab{display:none;position:fixed;bottom:20px;right:20px;width:52px;height:52px;border-radius:50%;background:var(--sage-dark);color:white;border:none;font-size:1.7rem;cursor:pointer;box-shadow:0 4px 16px rgba(44,44,44,.24);z-index:100;align-items:center;justify-content:center;transition:background .2s;}
+.mobile-fab:hover{background:var(--sage);}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:20px;right:20px;background:var(--charcoal);color:white;padding:10px 16px;border-radius:10px;font-size:.8rem;opacity:0;transform:translateY(8px);transition:all .25s;z-index:999;max-width:290px;pointer-events:none;}
+#toast.show{opacity:1;transform:translateY(0);}
+
+.empty-day{font-size:.64rem;color:var(--light-gray);font-style:italic;padding:2px 0;}
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--light-gray);border-radius:10px;}
+
+@media(max-width:768px){
+  .app{grid-template-columns:1fr;height:auto;}
+  .sidebar{display:none;}
+  .week-view{grid-template-columns:1fr!important;}
+  .week-day-col{min-height:auto;}
+  header{padding:10px 13px;}
+  .header-left h1{font-size:1.1rem;}
+  .main{padding:11px;}
+  .mobile-fab{display:flex;}
+  #toast{bottom:82px;right:12px;}
+  .overview-filters{gap:7px;}
+}
+</style>
+</head>
+<body>
+
+<div id="offlineBanner">Offline — de app werkt nog steeds!</div>
+
+<header>
+  <div class="header-left">
+    <h1>📅 Huishoud Kalender</h1>
+    <div class="subtitle">Jouw slimme taakplanner voor thuis</div>
+  </div>
+  <div class="header-right">
+    <a href="index.html" class="hdr-btn">🏡 Thuis</a>
+    <div class="profile-selector" id="profileSelector">
+      <button class="hdr-btn" onclick="toggleProfileDropdown(event)">
+        <span id="currentProfileEmoji">🏡</span>
+        <span id="currentProfileName">Laden…</span>
+        <span>▾</span>
+      </button>
+      <div class="profile-dropdown" id="profileDropdown">
+        <div id="profileListEl"></div>
+        <div class="profile-divider"></div>
+        <button class="profile-new-btn" onclick="openProfileModal()">＋ Nieuw profiel</button>
+      </div>
+    </div>
+    <button class="hdr-btn" onclick="openOverviewPage()">📋 Overzicht</button>
+    <button class="hdr-btn" id="installBtn" onclick="installApp()" style="display:none">📲 Installeer</button>
+    <button class="hdr-btn" id="notifBtn" onclick="toggleNotifications()">🔔 Notificaties</button>
+  </div>
+</header>
+
+<div class="app">
+  <aside class="sidebar">
+    <div>
+      <div class="section-title">Navigeer</div>
+      <div class="mini-cal">
+        <div class="mini-cal-header">
+          <button class="mini-cal-nav" onclick="changeMonth(-1)">‹</button>
+          <span class="mini-cal-title" id="miniCalTitle" onclick="toggleMonthPicker()"></span>
+          <button class="mini-cal-nav" onclick="changeMonth(1)">›</button>
+        </div>
+        <div class="month-picker" id="monthPicker">
+          <div class="mp-year">
+            <button onclick="changePickerYear(-1)">‹</button>
+            <span id="pickerYear"></span>
+            <button onclick="changePickerYear(1)">›</button>
+          </div>
+          <div class="mp-grid" id="mpGrid"></div>
+        </div>
+        <div class="mini-cal-grid" id="miniCalGrid"></div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Taak toevoegen</div>
+      <div class="task-form">
+        <div class="form-row"><label>Taaknaam</label><input type="text" id="taskName" placeholder="bijv. Stofzuigen"/></div>
+        <div class="form-row"><label>Omschrijving</label><textarea id="taskDesc" placeholder="Optionele omschrijving…"></textarea></div>
+        <div class="form-row-grid">
+          <div class="form-row"><label>Datum</label><input type="date" id="taskDate"/></div>
+          <div class="form-row"><label>Tijd</label><input type="time" id="taskTime" value="09:00"/></div>
+        </div>
+        <div class="form-row"><label>Categorie</label><select id="taskCategory"></select></div>
+        <div class="form-row">
+          <label>Herhaling</label>
+          <select id="taskRepeat">
+            <option value="none">Geen herhaling</option>
+            <option value="daily">Dagelijks</option>
+            <option value="weekly">Wekelijks</option>
+            <option value="biweekly">Elke 2 weken</option>
+            <option value="monthly">Maandelijks</option>
+            <option value="bimonthly">Elke 2 maanden</option>
+            <option value="quarterly">Per kwartaal</option>
+            <option value="halfyear">Halfjaarlijks</option>
+            <option value="yearly">Jaarlijks</option>
+          </select>
+        </div>
+        <button class="btn-add" onclick="addTask()">+ Taak toevoegen</button>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Categorieën</div>
+      <div class="categories" id="categoryList"></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="main-header">
+      <div class="week-nav">
+        <button class="week-nav-btn" id="prevBtn" onclick="navigateWeek(-1)">‹</button>
+        <h2 id="mainTitle"></h2>
+        <button class="week-nav-btn" id="nextBtn" onclick="navigateWeek(1)">›</button>
+      </div>
+      <div class="view-toggle">
+        <button class="view-btn active" data-view="week" onclick="setView('week',this)">Week</button>
+        <button class="view-btn" data-view="list" onclick="setView('list',this)">Lijst</button>
+      </div>
+    </div>
+    <div id="overdueBanner" class="overdue-banner" style="display:none">
+      <span class="ob-icon">⚠️</span>
+      <div class="ob-text">Je hebt <strong id="overdueCount">0</strong> verlopen taken.</div>
+    </div>
+    <div class="week-view active" id="weekView"></div>
+    <div class="list-view" id="listView"></div>
+  </main>
+</div>
+
+<!-- OVERVIEW PAGE (FULL SCREEN) -->
+<div class="overview-page" id="overviewPage">
+  <div class="overview-page-header">
+    <button class="ov-back-btn" onclick="closeOverviewPage()">← Terug</button>
+    <span class="ov-title">📋 Taak overzicht</span>
+    <button class="hdr-btn" onclick="openNewTask()">＋ Taak toevoegen</button>
+    <button class="hdr-btn" onclick="triggerCSVImport()" title="CSV importeren">📥 Importeer CSV</button>
+    <button class="hdr-btn" onclick="exportCSV()" title="CSV exporteren">📤 Exporteer CSV</button>
+  </div>
+  <div class="overview-filters">
+    <span class="ov-filter-label">Categorie</span>
+    <select class="ov-select" id="ovFilterCat" onchange="renderOverviewBody()"></select>
+    <span class="ov-filter-label">Frequentie</span>
+    <select class="ov-select" id="ovFilterFreq" onchange="renderOverviewBody()">
+      <option value="all">Alle frequenties</option>
+      <option value="daily">Dagelijks</option>
+      <option value="weekly">Wekelijks</option>
+      <option value="biweekly">Elke 2 weken</option>
+      <option value="monthly">Maandelijks</option>
+      <option value="bimonthly">Elke 2 maanden</option>
+      <option value="quarterly">Per kwartaal</option>
+      <option value="halfyear">Halfjaarlijks</option>
+      <option value="yearly">Jaarlijks</option>
+      <option value="none">Eenmalig</option>
+    </select>
+    <span class="ov-filter-label">Groepeer op</span>
+    <select class="ov-select" id="ovGroupBy" onchange="renderOverviewBody()">
+      <option value="freq">Frequentie</option>
+      <option value="cat">Categorie</option>
+    </select>
+    <div class="ov-spacer"></div>
+    <input class="ov-search" id="ovSearch" type="text" placeholder="🔍 Zoek taak…" oninput="renderOverviewBody()"/>
+  </div>
+  <div class="overview-body" id="overviewBody"></div>
+</div>
+
+<!-- TASK MODAL -->
+<div class="modal-overlay" id="taskModal" onclick="if(event.target===this)closeTaskModal()">
+  <div class="modal-card">
+    <div class="modal-top">
+      <h3 id="modalTitle">Taak</h3>
+      <button class="modal-close" onclick="closeTaskModal()">✕</button>
+    </div>
+    <div id="modalRepeatNote" class="modal-repeat-note" style="display:none"></div>
+    <div class="modal-body">
+      <label class="modal-done-row" id="modalDoneRow"><input type="checkbox" id="editDone"> <span>Afgerond</span></label>
+      <div class="form-row"><label>Taaknaam</label><input type="text" id="editName"/></div>
+      <div class="form-row"><label>Omschrijving</label><textarea id="editDesc"></textarea></div>
+      <div class="form-row-grid">
+        <div class="form-row"><label>Datum</label><input type="date" id="editDate"/></div>
+        <div class="form-row"><label>Tijd</label><input type="time" id="editTime"/></div>
+      </div>
+      <div class="form-row"><label>Categorie</label><select id="editCategory"></select></div>
+      <div class="form-row">
+        <label>Herhaling</label>
+        <select id="editRepeat">
+          <option value="none">Geen herhaling</option>
+          <option value="daily">Dagelijks</option>
+          <option value="weekly">Wekelijks</option>
+          <option value="biweekly">Elke 2 weken</option>
+          <option value="monthly">Maandelijks</option>
+          <option value="bimonthly">Elke 2 maanden</option>
+          <option value="quarterly">Per kwartaal</option>
+          <option value="halfyear">Halfjaarlijks</option>
+          <option value="yearly">Jaarlijks</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-danger" id="modalDeleteBtn" onclick="deleteTaskFromModal()">Verwijderen</button>
+      <button class="btn-save" onclick="saveModal()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div class="modal-overlay" id="profileModal" onclick="if(event.target===this)closeProfileModal()">
+  <div class="modal-card">
+    <div class="modal-top">
+      <h3 id="profileModalTitle">Nieuw profiel</h3>
+      <button class="modal-close" onclick="closeProfileModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row"><label>Naam</label><input type="text" id="profileName" placeholder="bijv. Familie, Studio…"/></div>
+      <div class="form-row"><label>Icoon</label><div class="emoji-grid" id="emojiGrid"></div></div>
+      <div class="form-row">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:.82rem;font-weight:400">
+          <input type="checkbox" id="profileSeedTasks" checked style="width:14px;height:14px;accent-color:var(--sage)">
+          Standaard taken inladen
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-danger" id="profileDeleteBtn" onclick="deleteCurrentProfile()" style="display:none">Verwijderen</button>
+      <button class="btn-save" onclick="saveProfile()">Aanmaken</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden CSV file input -->
+<input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="handleCSVFile(event)"/>
+
+<button class="mobile-fab" onclick="openNewTask()" title="Taak toevoegen">+</button>
+<div id="toast"></div>
+
+<script>
+// ─── CONSTANTS ───────────────────────────────────────────
+const DEFAULT_CATEGORIES = {
+  schoonmaken:{ label:'Schoonmaken',          emoji:'🧹', color:'#7C9E8A' },
+  koken:      { label:'Koken & boodschappen',  emoji:'🍳', color:'#C4714A' },
+  tuin:       { label:'Tuin & buiten',         emoji:'🌿', color:'#5A8A4A' },
+  was:        { label:'Was & strijken',        emoji:'👕', color:'#5B7FA6' },
+  onderhoud:  { label:'Onderhoud',             emoji:'🔧', color:'#8A6FA0' },
+  overig:     { label:'Overig',                emoji:'📋', color:'#A08060' },
+};
+const REPEAT_LABELS = {
+  none:'Eenmalig', daily:'Dagelijks', weekly:'Wekelijks', biweekly:'Elke 2 weken',
+  monthly:'Maandelijks', bimonthly:'Elke 2 maanden', quarterly:'Per kwartaal',
+  halfyear:'Halfjaarlijks', yearly:'Jaarlijks',
+};
+const REPEAT_ORDER = ['daily','weekly','biweekly','monthly','bimonthly','quarterly','halfyear','yearly','none'];
+const DAY_NAMES   = ['Ma','Di','Wo','Do','Vr','Za','Zo'];
+const MONTH_NAMES = ['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
+const PROFILE_EMOJIS = ['🏡','🏠','🏢','🌿','⭐','🔑','❤️','🌸','🌻','☀️','🐾','🎯','🏋️','📚','🎨','🌊'];
+
+// ─── PROFILES ────────────────────────────────────────────
+let profiles = JSON.parse(localStorage.getItem('hk_profiles') || 'null');
+if(!profiles){ profiles=[{id:'default',name:'Ons Huishouden',emoji:'🏡'}]; localStorage.setItem('hk_profiles',JSON.stringify(profiles)); }
+let currentProfileId = localStorage.getItem('hk_current') || 'default';
+if(!profiles.find(p=>p.id===currentProfileId)) currentProfileId = profiles[0].id;
+const oldTasks = localStorage.getItem('huishouden_tasks');
+if(oldTasks && !localStorage.getItem('hk_tasks_default')) localStorage.setItem('hk_tasks_default', oldTasks);
+function taskKey(id){ return `hk_tasks_${id}`; }
+function loadTasks(id){ return JSON.parse(localStorage.getItem(taskKey(id))||'[]').map(t=>({description:'',doneInstances:[],skipDates:[],...t})); }
+
+let tasks = loadTasks(currentProfileId);
+let CATEGORIES = {...DEFAULT_CATEGORIES};
+
+// ─── STATE ───────────────────────────────────────────────
+let notificationsEnabled=false, currentView='week', selectedDate=null;
+let miniCalMonth=new Date().getMonth(), miniCalYear=new Date().getFullYear(), pickerYear=miniCalYear;
+let filterCat='all', notifIntervalId=null;
+let currentWeekStart=getMonday(new Date());
+let editingTaskId=null, editingInstanceDate=null;
+let modalFromOverview=false;
+
+// ─── DATE HELPERS ────────────────────────────────────────
+function getMonday(d){ const date=new Date(d); date.setHours(0,0,0,0); date.setDate(date.getDate()-((date.getDay()+6)%7)); return date; }
+function getWeekDates(){ return Array.from({length:7},(_,i)=>{ const d=new Date(currentWeekStart); d.setDate(currentWeekStart.getDate()+i); return d; }); }
+function fmtDate(d){ return d.toISOString().split('T')[0]; }
+function getISOWeek(date){ const d=new Date(date); d.setHours(0,0,0,0); d.setDate(d.getDate()+3-((d.getDay()+6)%7)); const w1=new Date(d.getFullYear(),0,4); return 1+Math.round(((d-w1)/86400000-3+((w1.getDay()+6)%7))/7); }
+function navigateWeek(dir){ currentWeekStart=new Date(currentWeekStart); currentWeekStart.setDate(currentWeekStart.getDate()+dir*7); render(); }
+function nextWeekday(isoDay,from){ const d=new Date(from||new Date()); d.setHours(0,0,0,0); const dow=d.getDay()||7; d.setDate(d.getDate()+((isoDay-dow+7)%7)); return d; }
+
+// ─── RECURRENCE ──────────────────────────────────────────
+function advanceByRepeat(date,repeat){ const d=new Date(date); switch(repeat){ case 'daily':d.setDate(d.getDate()+1);break; case 'weekly':d.setDate(d.getDate()+7);break; case 'biweekly':d.setDate(d.getDate()+14);break; case 'monthly':d.setMonth(d.getMonth()+1);break; case 'bimonthly':d.setMonth(d.getMonth()+2);break; case 'quarterly':d.setMonth(d.getMonth()+3);break; case 'halfyear':d.setMonth(d.getMonth()+6);break; case 'yearly':d.setFullYear(d.getFullYear()+1);break; } return d; }
+function getTaskInstances(task,fromDate,toDate){ const from=new Date(fromDate);from.setHours(0,0,0,0); const to=new Date(toDate);to.setHours(23,59,59,999); const instances=[]; if(task.repeat==='none'){ const d=new Date(task.date+'T00:00:00'); if(d>=from&&d<=to){ const i=makeInstance(task,task.date);if(i)instances.push(i); } return instances; } let cur=new Date(task.date+'T00:00:00'); if(cur>to)return instances; let s=0; while(cur<=to&&s++<2000){ if(cur>=from){const i=makeInstance(task,fmtDate(cur));if(i)instances.push(i);} cur=advanceByRepeat(cur,task.repeat); } return instances; }
+function makeInstance(task,dateStr){ if((task.skipDates||[]).includes(dateStr))return null; const done=task.repeat==='none'?task.done:(task.doneInstances||[]).includes(dateStr); return{...task,date:dateStr,done}; }
+function getDatesWithTasks(from,to){ const r=new Set(); tasks.forEach(t=>getTaskInstances(t,from,to).forEach(i=>i&&r.add(i.date))); return r; }
+
+// ─── SEED TASKS ──────────────────────────────────────────
+async function seedDefaultTasks(){
+  if(tasks.length>0)return;
+  try{
+    const resp=await fetch('./taken.csv');
+    if(resp.ok){
+      const text=await resp.text();
+      const lines=text.replace(/^﻿/,'').split(/\r?\n/).filter(l=>l.trim());
+      if(lines.length>=2){
+        const headers=parseCSVLine(lines[0]).map(h=>h.trim().toLowerCase());
+        const ni=headers.indexOf('naam'),di=headers.indexOf('datum');
+        const dci=headers.indexOf('omschrijving'),ti=headers.indexOf('tijd');
+        const ci=headers.indexOf('categorie'),ri=headers.indexOf('herhaling');
+        if(ni>=0&&di>=0){
+          lines.slice(1).forEach(line=>{
+            if(!line.trim())return;
+            const cols=parseCSVLine(line);
+            const name=(cols[ni]||'').trim(),date=(cols[di]||'').trim();
+            if(!name||!date)return;
+            tasks.push({id:Date.now()+Math.random(),name,description:dci>=0?(cols[dci]||'').trim():'',date,time:ti>=0?(cols[ti]||'09:00').trim():'09:00',category:ci>=0?(cols[ci]||'overig').trim():'overig',repeat:ri>=0?(cols[ri]||'none').trim():'none',done:false,doneInstances:[],skipDates:[]});
+          });
+          saveTasks();
+          return;
+        }
+      }
+    }
+  }catch(e){}
+  seedHardcodedDefaults();
+}
+
+function seedHardcodedDefaults(){
+  if(tasks.length>0)return;
+  const today=new Date();today.setHours(0,0,0,0);
+  const mon=nextWeekday(1);
+  let wenEven=nextWeekday(3); if(getISOWeek(wenEven)%2!==0)wenEven.setDate(wenEven.getDate()+7);
+  const defaults=[
+    {name:'Stofzuigen woonkamer',  cat:'schoonmaken',date:fmtDate(mon),             time:'10:00',repeat:'weekly'   },
+    {name:'Keuken schoonmaken',    cat:'schoonmaken',date:fmtDate(mon),             time:'19:00',repeat:'weekly'   },
+    {name:'Badkamer schoonmaken',  cat:'schoonmaken',date:fmtDate(wenEven),         time:'19:00',repeat:'biweekly' },
+    {name:'Ramen zemen',           cat:'schoonmaken',date:'2026-01-01',             time:'10:00',repeat:'bimonthly'},
+    {name:'Beddengoed wassen',     cat:'was',         date:fmtDate(mon),             time:'10:00',repeat:'weekly'   },
+    {name:'Was draaien',           cat:'was',         date:fmtDate(mon),             time:'08:00',repeat:'biweekly' },
+    {name:'Boodschappen doen',     cat:'koken',       date:fmtDate(nextWeekday(2)), time:'11:00',repeat:'weekly'   },
+    {name:'Tuin sproeien',         cat:'tuin',        date:fmtDate(today),           time:'07:00',repeat:'daily'    },
+    {name:'Afval buiten zetten',   cat:'overig',      date:fmtDate(nextWeekday(5)), time:'07:30',repeat:'weekly'   },
+  ];
+  defaults.forEach(d=>tasks.push({id:Date.now()+Math.random(),name:d.name,description:'',date:d.date,time:d.time,category:d.cat,repeat:d.repeat,done:false,doneInstances:[],skipDates:[]}));
+  saveTasks();
+}
+
+function saveTasks(){ localStorage.setItem(taskKey(currentProfileId),JSON.stringify(tasks)); }
+function saveProfiles(){ localStorage.setItem('hk_profiles',JSON.stringify(profiles)); }
+
+// ─── CSV ─────────────────────────────────────────────────
+function triggerCSVImport(){ document.getElementById('csvFileInput').value=''; document.getElementById('csvFileInput').click(); }
+
+function handleCSVFile(e){
+  const file=e.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const text=ev.target.result;
+    const lines=text.split(/\r?\n/).filter(l=>l.trim());
+    if(lines.length<2){showToast('CSV heeft geen data');return;}
+    const headers=parseCSVLine(lines[0]).map(h=>h.trim().toLowerCase());
+    const idx=f=>headers.indexOf(f);
+    const ni=idx('naam'),di=idx('datum'),dci=idx('omschrijving'),ti=idx('tijd'),ci=idx('categorie'),ri=idx('herhaling');
+    if(ni<0||di<0){showToast('CSV vereist kolommen: naam, datum');return;}
+    let count=0;
+    lines.slice(1).forEach(line=>{
+      if(!line.trim())return;
+      const cols=parseCSVLine(line);
+      const name=(cols[ni]||'').trim(); const date=(cols[di]||'').trim();
+      if(!name||!date)return;
+      tasks.push({id:Date.now()+Math.random(),name,description:dci>=0?(cols[dci]||'').trim():'',date,time:ti>=0?(cols[ti]||'09:00').trim():'09:00',category:ci>=0?(cols[ci]||'overig').trim():'overig',repeat:ri>=0?(cols[ri]||'none').trim():'none',done:false,doneInstances:[],skipDates:[]});
+      count++;
+    });
+    saveTasks(); render();
+    if(document.getElementById('overviewPage').classList.contains('open')) renderOverviewBody();
+    showToast(`${count} taken geïmporteerd!`);
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
+function parseCSVLine(line){
+  const result=[]; let cur=''; let inQ=false;
+  for(let i=0;i<line.length;i++){
+    if(line[i]==='"'){inQ=!inQ;}
+    else if(line[i]===','&&!inQ){result.push(cur);cur='';}
+    else{cur+=line[i];}
+  }
+  result.push(cur); return result;
+}
+
+function exportCSV(){
+  const header='naam,omschrijving,datum,tijd,categorie,herhaling';
+  const rows=tasks.map(t=>[t.name,t.description||'',t.date,t.time,t.category,t.repeat].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','));
+  const csv=[header,...rows].join('\n');
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=`taken-${currentProfileId}-${fmtDate(new Date())}.csv`; a.click();
+  URL.revokeObjectURL(url);
+  showToast('CSV gedownload!');
+}
+
+// ─── PROFILES ────────────────────────────────────────────
+function toggleProfileDropdown(e){ e&&e.stopPropagation(); const dd=document.getElementById('profileDropdown'); dd.classList.toggle('open'); if(dd.classList.contains('open'))renderProfileList(); }
+function closeProfileDropdown(){ document.getElementById('profileDropdown').classList.remove('open'); }
+document.addEventListener('click',e=>{ if(!document.getElementById('profileSelector').contains(e.target))closeProfileDropdown(); });
+function renderProfileList(){ document.getElementById('profileListEl').innerHTML=profiles.map(p=>`<div class="profile-list-item ${p.id===currentProfileId?'current':''}" onclick="switchProfile('${p.id}')"><span>${p.emoji}</span><span style="flex:1">${p.name}</span>${p.id===currentProfileId?'<span style="color:var(--sage-dark)">✓</span>':''}</div>`).join(''); }
+
+function switchProfile(id){
+  saveTasks(); currentProfileId=id; localStorage.setItem('hk_current',id); tasks=loadTasks(id);
+  filterCat='all'; currentWeekStart=getMonday(new Date());
+  const p=profiles.find(p=>p.id===id);
+  document.getElementById('currentProfileEmoji').textContent=p?.emoji||'🏡';
+  document.getElementById('currentProfileName').textContent=p?.name||'Profiel';
+  seedDefaultTasks().then(()=>render());
+  closeProfileDropdown(); showToast(`Profiel "${p?.name}" geladen`);
+}
+
+function openProfileModal(editId){ closeProfileDropdown(); document.getElementById('profileModalTitle').textContent=editId?'Profiel bewerken':'Nieuw profiel'; document.getElementById('profileName').value=''; document.getElementById('profileSeedTasks').checked=true; document.getElementById('profileDeleteBtn').style.display='none'; document.getElementById('profileModal').dataset.editId=editId||''; const grid=document.getElementById('emojiGrid'); grid.innerHTML=PROFILE_EMOJIS.map(e=>`<button class="emoji-btn ${e===PROFILE_EMOJIS[0]?'selected':''}" onclick="selectEmoji(this,'${e}')">${e}</button>`).join(''); if(editId){const p=profiles.find(p=>p.id===editId);if(p){document.getElementById('profileName').value=p.name;selectEmojiByValue(p.emoji);}document.getElementById('profileDeleteBtn').style.display=profiles.length>1?'':'none';} document.getElementById('profileModal').classList.add('open'); }
+function closeProfileModal(){ document.getElementById('profileModal').classList.remove('open'); }
+function selectEmoji(btn,emoji){ document.querySelectorAll('.emoji-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); }
+function selectEmojiByValue(emoji){ document.querySelectorAll('.emoji-btn').forEach(b=>{ if(b.textContent===emoji)b.classList.add('selected');else b.classList.remove('selected'); }); }
+function getSelectedEmoji(){ const btn=document.querySelector('.emoji-btn.selected'); return btn?btn.textContent:'🏡'; }
+
+function saveProfile(){
+  const name=document.getElementById('profileName').value.trim(); if(!name){showToast('Vul een naam in');return;}
+  const emoji=getSelectedEmoji();
+  const editId=document.getElementById('profileModal').dataset.editId;
+  if(editId){
+    const p=profiles.find(p=>p.id===editId);if(p){p.name=name;p.emoji=emoji;}
+    saveProfiles();
+    if(editId===currentProfileId){document.getElementById('currentProfileEmoji').textContent=emoji;document.getElementById('currentProfileName').textContent=name;}
+    showToast('Profiel bijgewerkt');
+  }else{
+    const id='profile_'+Date.now();
+    profiles.push({id,name,emoji}); saveProfiles(); saveTasks();
+    currentProfileId=id; localStorage.setItem('hk_current',id); tasks=[];
+    document.getElementById('currentProfileEmoji').textContent=emoji;
+    document.getElementById('currentProfileName').textContent=name;
+    filterCat='all'; currentWeekStart=getMonday(new Date());
+    if(document.getElementById('profileSeedTasks').checked){
+      seedDefaultTasks().then(()=>render());
+    }else{
+      saveTasks(); render();
+    }
+    showToast(`Profiel "${name}" aangemaakt!`);
+  }
+  closeProfileModal(); renderProfileList();
+}
+
+function deleteCurrentProfile(){ const editId=document.getElementById('profileModal').dataset.editId; if(!editId||profiles.length<=1){showToast('Minimaal 1 profiel vereist');return;} if(!confirm('Profiel verwijderen? Alle taken worden verwijderd.'))return; localStorage.removeItem(taskKey(editId)); profiles=profiles.filter(p=>p.id!==editId); saveProfiles(); closeProfileModal(); switchProfile(profiles[0].id); showToast('Profiel verwijderd'); }
+
+// ─── NOTIFICATIONS ────────────────────────────────────────
+async function toggleNotifications(){ if(notificationsEnabled){notificationsEnabled=false;clearInterval(notifIntervalId);document.getElementById('notifBtn').textContent='🔔 Notificaties';document.getElementById('notifBtn').classList.remove('active');showToast('Notificaties uitgeschakeld');return;}if(!('Notification'in window)){showToast('Geen notificaties beschikbaar');return;}const perm=await Notification.requestPermission();if(perm==='granted'){notificationsEnabled=true;document.getElementById('notifBtn').innerHTML='✅ Notificaties aan';document.getElementById('notifBtn').classList.add('active');notifIntervalId=setInterval(checkTasksNow,60000);checkTasksNow();showToast('Notificaties ingeschakeld!');}else{showToast('Notificaties geweigerd.');} }
+function checkTasksNow(){ if(!notificationsEnabled)return; const now=new Date(); const t=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`; tasks.forEach(task=>getTaskInstances(task,now,now).forEach(i=>{if(i&&!i.done&&i.time===t)new Notification('📅 Taak',{body:`${CATEGORIES[task.category]?.emoji||'📋'} ${task.name}`,icon:'./icon.svg'});})); }
+
+// ─── CRUD ────────────────────────────────────────────────
+function addTask(){ const name=document.getElementById('taskName').value.trim(); const desc=document.getElementById('taskDesc').value.trim(); const date=document.getElementById('taskDate').value; const time=document.getElementById('taskTime').value; const cat=document.getElementById('taskCategory').value; const rep=document.getElementById('taskRepeat').value; if(!name||!date){showToast('Vul een naam en datum in');return;} tasks.push({id:Date.now(),name,description:desc,date,time,category:cat,repeat:rep,done:false,doneInstances:[],skipDates:[]}); saveTasks(); document.getElementById('taskName').value=''; document.getElementById('taskDesc').value=''; showToast(`"${name}" toegevoegd!`); render(); }
+function toggleDone(id,instanceDate){ const t=tasks.find(t=>t.id===id);if(!t)return; if(t.repeat==='none'){t.done=!t.done;if(t.done)showToast(`✅ "${t.name}" afgerond!`);}else{if(!t.doneInstances)t.doneInstances=[];const idx=t.doneInstances.indexOf(instanceDate);if(idx>=0)t.doneInstances.splice(idx,1);else{t.doneInstances.push(instanceDate);showToast(`✅ "${t.name}" afgerond!`);}}saveTasks();render(); }
+function deleteTask(id){ const t=tasks.find(t=>t.id===id);if(!t)return; tasks=tasks.filter(t=>t.id!==id);saveTasks();showToast(`"${t.name}" verwijderd`);render(); if(document.getElementById('overviewPage').classList.contains('open'))renderOverviewBody(); }
+
+// ─── TASK MODAL ───────────────────────────────────────────
+function buildCatOptions(selectId,value){ const sel=document.getElementById(selectId); sel.innerHTML=Object.entries(CATEGORIES).map(([k,c])=>`<option value="${k}">${c.emoji} ${c.label}</option>`).join(''); if(value)sel.value=value; }
+function openTask(id,instanceDate,fromOverview){ const t=tasks.find(t=>t.id===id);if(!t)return; editingTaskId=id;editingInstanceDate=instanceDate||t.date; modalFromOverview=!!fromOverview; document.getElementById('modalTitle').textContent='Taak bewerken'; document.getElementById('modalDeleteBtn').style.display=''; document.getElementById('modalDoneRow').style.display=fromOverview?'none':''; const isRec=t.repeat!=='none'; const note=document.getElementById('modalRepeatNote'); note.style.display=isRec?'block':'none'; if(isRec)note.textContent=`🔄 Herhalende taak (${REPEAT_LABELS[t.repeat]}) — wijzigingen gelden voor de hele reeks.`; const done=isRec?(t.doneInstances||[]).includes(editingInstanceDate):t.done; document.getElementById('editDone').checked=done; document.getElementById('editName').value=t.name; document.getElementById('editDesc').value=t.description||''; document.getElementById('editDate').value=t.date; document.getElementById('editTime').value=t.time; buildCatOptions('editCategory',t.category); document.getElementById('editRepeat').value=t.repeat; document.getElementById('taskModal').classList.add('open'); }
+function openNewTask(prefillDate){ editingTaskId=null;editingInstanceDate=null; document.getElementById('modalTitle').textContent='Taak toevoegen'; document.getElementById('modalDeleteBtn').style.display='none'; document.getElementById('modalRepeatNote').style.display='none'; document.getElementById('modalDoneRow').style.display=''; document.getElementById('editDone').checked=false; document.getElementById('editName').value=''; document.getElementById('editDesc').value=''; document.getElementById('editDate').value=prefillDate||fmtDate(new Date()); document.getElementById('editTime').value='09:00'; buildCatOptions('editCategory',null); document.getElementById('editRepeat').value='none'; document.getElementById('taskModal').classList.add('open'); setTimeout(()=>document.getElementById('editName').focus(),80); }
+function closeTaskModal(){ document.getElementById('taskModal').classList.remove('open'); editingTaskId=null;editingInstanceDate=null; if(modalFromOverview)renderOverviewBody(); }
+function saveModal(){ const name=document.getElementById('editName').value.trim(); const desc=document.getElementById('editDesc').value.trim(); const date=document.getElementById('editDate').value; const time=document.getElementById('editTime').value; const cat=document.getElementById('editCategory').value; const rep=document.getElementById('editRepeat').value; const done=document.getElementById('editDone').checked; if(!name||!date){showToast('Vul naam en datum in');return;} if(editingTaskId!==null){const t=tasks.find(t=>t.id===editingTaskId);if(t){t.name=name;t.description=desc;t.date=date;t.time=time;t.category=cat;t.repeat=rep;if(rep==='none'){t.done=done;}else{if(!t.doneInstances)t.doneInstances=[];const idx=t.doneInstances.indexOf(editingInstanceDate);if(done&&idx<0)t.doneInstances.push(editingInstanceDate);if(!done&&idx>=0)t.doneInstances.splice(idx,1);}}showToast('Taak bijgewerkt!');}else{tasks.push({id:Date.now(),name,description:desc,date,time,category:cat,repeat:rep,done,doneInstances:[],skipDates:[]});showToast(`"${name}" toegevoegd!`);}saveTasks();closeTaskModal();render(); }
+function deleteTaskFromModal(){ if(editingTaskId===null)return; const t=tasks.find(t=>t.id===editingTaskId);if(!t)return; if(t.repeat!=='none'&&editingInstanceDate){if(confirm(`"${t.name}"\n\nOK → verwijder de hele reeks\nAnnuleren → sla alleen ${editingInstanceDate} over`)){deleteTask(editingTaskId);}else{if(!t.skipDates)t.skipDates=[];if(!t.skipDates.includes(editingInstanceDate))t.skipDates.push(editingInstanceDate);saveTasks();showToast('Datum overgeslagen');render();}}else{deleteTask(editingTaskId);}closeTaskModal(); }
+
+// ─── OVERVIEW PAGE ───────────────────────────────────────
+function openOverviewPage(){ buildOvFilterCat(); renderOverviewBody(); document.getElementById('overviewPage').classList.add('open'); }
+function closeOverviewPage(){ document.getElementById('overviewPage').classList.remove('open'); }
+function buildOvFilterCat(){ const sel=document.getElementById('ovFilterCat'); sel.innerHTML=`<option value="all">Alle categorieën</option>`+Object.entries(CATEGORIES).map(([k,c])=>`<option value="${k}">${c.emoji} ${c.label}</option>`).join(''); }
+
+function renderOverviewBody(){
+  const body=document.getElementById('overviewBody');
+  const q=document.getElementById('ovSearch').value.toLowerCase();
+  const fCat=document.getElementById('ovFilterCat').value;
+  const fFreq=document.getElementById('ovFilterFreq').value;
+  const groupBy=document.getElementById('ovGroupBy').value;
+  let filtered=tasks.filter(t=>{
+    if(fCat!=='all'&&t.category!==fCat)return false;
+    if(fFreq!=='all'&&t.repeat!==fFreq)return false;
+    if(q&&!t.name.toLowerCase().includes(q)&&!(t.description||'').toLowerCase().includes(q))return false;
+    return true;
+  });
+  if(!filtered.length){ body.innerHTML='<div class="ov-empty">Geen taken gevonden</div>'; return; }
+  let groups;
+  if(groupBy==='freq'){
+    groups={}; REPEAT_ORDER.forEach(r=>{groups[r]=[];}); filtered.forEach(t=>{const k=t.repeat||'none';if(groups[k])groups[k].push(t);});
+    body.innerHTML=REPEAT_ORDER.filter(r=>groups[r].length).map(r=>{const g=groups[r].sort((a,b)=>a.name.localeCompare(b.name));return`<div class="task-list-group"><div class="task-list-date"><span>${REPEAT_LABELS[r]}</span><span style="background:var(--light-gray);padding:1px 7px;border-radius:10px;font-size:.66rem">${g.length} ${g.length===1?'taak':'taken'}</span></div>${g.map(t=>ovTaskHTML(t)).join('')}</div>`;}).join('');
+  }else{
+    groups={}; Object.keys(CATEGORIES).forEach(k=>{groups[k]=[]}); filtered.forEach(t=>{if(groups[t.category])groups[t.category].push(t);});
+    body.innerHTML=Object.entries(groups).filter(([,g])=>g.length).map(([k,g])=>{const cat=CATEGORIES[k]||{label:k,emoji:'📋',color:'#999'};g.sort((a,b)=>a.name.localeCompare(b.name));return`<div class="task-list-group"><div class="task-list-date"><span style="color:${cat.color}">${cat.emoji} ${cat.label}</span><span style="background:var(--light-gray);padding:1px 7px;border-radius:10px;font-size:.66rem">${g.length} ${g.length===1?'taak':'taken'}</span></div>${g.map(t=>ovTaskHTML(t)).join('')}</div>`;}).join('');
+  }
+}
+
+function ovTaskHTML(t){ const cat=CATEGORIES[t.category]||{}; const desc=t.description?`<div class="task-list-desc">${t.description.substring(0,70)}${t.description.length>70?'…':''}</div>`:''; return`<div class="task-list-item" onclick="openTask(${t.id},'${t.date}',true)"><div class="task-list-info"><div class="task-list-name">${cat.emoji||''} ${t.name}</div><div class="task-list-meta">${t.date} · ${t.time} · ${REPEAT_LABELS[t.repeat]||'Eenmalig'}</div>${desc}</div><span class="task-list-badge" style="background:${cat.color||'#999'}22;color:${cat.color||'#999'}">${cat.label||t.category}</span><button class="del-btn-list" onclick="event.stopPropagation();deleteTask(${t.id})">🗑</button></div>`; }
+
+// ─── RENDER ──────────────────────────────────────────────
+function render(){ renderMiniCal();renderCategoryList();renderWeekView();renderListView();renderOverdue();updateMainTitle(); }
+function updateMainTitle(){ const week=getWeekDates(); const first=week[0],last=week[6]; const sameMonth=first.getMonth()===last.getMonth(); const opts={day:'numeric',month:'short'}; document.getElementById('mainTitle').textContent=sameMonth?`${first.getDate()} – ${last.toLocaleDateString('nl-NL',opts)} ${last.getFullYear()}`:`${first.toLocaleDateString('nl-NL',opts)} – ${last.toLocaleDateString('nl-NL',opts)} ${last.getFullYear()}`; const isWeek=currentView==='week'; document.getElementById('prevBtn').style.visibility=isWeek?'visible':'hidden'; document.getElementById('nextBtn').style.visibility=isWeek?'visible':'hidden'; }
+function renderWeekView(){ const wv=document.getElementById('weekView'); const week=getWeekDates(); const todayStr=fmtDate(new Date()); const byDate={}; week.forEach(d=>{byDate[fmtDate(d)]=[];}); tasks.forEach(task=>{if(filterCat!=='all'&&task.category!==filterCat)return;getTaskInstances(task,week[0],week[6]).forEach(i=>{if(i&&byDate[i.date])byDate[i.date].push(i);});}); Object.values(byDate).forEach(arr=>arr.sort((a,b)=>a.time.localeCompare(b.time))); wv.innerHTML=week.map((d,i)=>{const dStr=fmtDate(d);const dayInsts=byDate[dStr]||[];const isToday=dStr===todayStr;return`<div class="week-day-col ${isToday?'today-col':''}"><div class="week-day-name">${DAY_NAMES[i]}</div><div class="week-day-num">${d.getDate()}</div>${dayInsts.length===0?'<div class="empty-day">vrij</div>':''}${dayInsts.map(t=>{const color=CATEGORIES[t.category]?.color||'#999';return`<div class="task-chip ${t.done?'done':''}"><button class="chip-check" onclick="event.stopPropagation();toggleDone(${t.id},'${t.date}')">${t.done?'✓':'○'}</button><span class="cat-indicator" style="background:${color}"></span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" onclick="openTask(${t.id},'${t.date}')">${t.name}</span><div class="task-actions"><button class="task-action-btn" onclick="event.stopPropagation();openTask(${t.id},'${t.date}')">✎</button><button class="task-action-btn" onclick="event.stopPropagation();deleteTask(${t.id})">✕</button></div></div>`;}).join('')}<button class="week-add-btn" onclick="openNewTask('${dStr}')">+ toevoegen</button></div>`;}).join('');}
+function renderListView(){ const lv=document.getElementById('listView'); const week=getWeekDates(); const all=[]; tasks.forEach(task=>{if(filterCat!=='all'&&task.category!==filterCat)return;getTaskInstances(task,week[0],week[6]).forEach(i=>i&&all.push(i));}); all.sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)); const grouped={}; all.forEach(t=>{if(!grouped[t.date])grouped[t.date]=[];grouped[t.date].push(t);}); const todayStr=fmtDate(new Date()); if(!Object.keys(grouped).length){lv.innerHTML='<div style="color:var(--mid-gray);font-style:italic;padding:20px 0">Geen taken deze week</div>';return;} lv.innerHTML=Object.entries(grouped).sort(([a],[b])=>a.localeCompare(b)).map(([date,dayTasks])=>{const d=new Date(date+'T12:00:00');const label=date===todayStr?'Vandaag':d.toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long'});return`<div class="task-list-group"><div class="task-list-date">${label}</div>${dayTasks.map(t=>{const cat=CATEGORIES[t.category]||{};const desc=t.description?`<div class="task-list-desc">${t.description.substring(0,70)}${t.description.length>70?'…':''}</div>`:'';return`<div class="task-list-item ${t.done?'done':''}" onclick="openTask(${t.id},'${t.date}')"><div class="check-circle" onclick="event.stopPropagation();toggleDone(${t.id},'${t.date}')">${t.done?'✓':''}</div><div class="task-list-info"><div class="task-list-name">${cat.emoji||''} ${t.name}</div><div class="task-list-meta">${t.time} · ${REPEAT_LABELS[t.repeat]||'Eenmalig'}</div>${desc}</div><span class="task-list-badge" style="background:${cat.color||'#999'}22;color:${cat.color||'#999'}">${cat.label||t.category}</span><button class="del-btn-list" onclick="event.stopPropagation();deleteTask(${t.id})">🗑</button></div>`;}).join('')}</div>`;}).join('');}
+function renderCategoryList(){ const el=document.getElementById('categoryList'); const all=[['all',{label:'Alles',emoji:'🏠',color:'#7C9E8A'}],...Object.entries(CATEGORIES)]; el.innerHTML=all.map(([key,cat])=>{const count=key==='all'?tasks.length:tasks.filter(t=>t.category===key).length;return`<div class="cat-item ${filterCat===key?'active':''}" onclick="setFilter('${key}')"><span class="cat-dot" style="background:${cat.color}"></span><span>${cat.emoji} ${cat.label}</span><span class="cat-count">${count}</span></div>`;}).join(''); buildCatOptions('taskCategory',document.getElementById('taskCategory').value||Object.keys(CATEGORIES)[0]); }
+function renderOverdue(){ const today=new Date();today.setHours(0,0,0,0);const todayStr=fmtDate(today);let count=0;tasks.forEach(t=>{if(t.repeat==='none'){if(!t.done&&t.date<todayStr)count++;}else{const past7=new Date(today);past7.setDate(past7.getDate()-7);const yest=new Date(today);yest.setDate(yest.getDate()-1);getTaskInstances(t,past7,yest).forEach(i=>{if(i&&!i.done)count++;});}}); const banner=document.getElementById('overdueBanner');banner.style.display=count>0?'flex':'none';if(count>0)document.getElementById('overdueCount').textContent=count; }
+
+// ─── MINI CAL ────────────────────────────────────────────
+function renderMiniCal(){ const grid=document.getElementById('miniCalGrid'); document.getElementById('miniCalTitle').textContent=`${MONTH_NAMES[miniCalMonth]} ${miniCalYear} ▾`; const weekDates=new Set(getWeekDates().map(d=>fmtDate(d))); const todayStr=fmtDate(new Date()); const firstOfMonth=new Date(miniCalYear,miniCalMonth,1); const startDow=(firstOfMonth.getDay()+6)%7; const calStart=new Date(firstOfMonth);calStart.setDate(1-startDow); const daysInMonth=new Date(miniCalYear,miniCalMonth+1,0).getDate(); const totalCells=Math.ceil((startDow+daysInMonth)/7)*7; const calEnd=new Date(calStart);calEnd.setDate(calStart.getDate()+totalCells-1); const datesWithTasks=getDatesWithTasks(calStart,calEnd); let html=`<div class="wk-label">Wk</div>`+DAY_NAMES.map(d=>`<div class="day-name">${d}</div>`).join(''); for(let i=0;i<totalCells;i++){const d=new Date(calStart);d.setDate(calStart.getDate()+i);if(i%7===0)html+=`<div class="wk-num">${getISOWeek(d)}</div>`;const dateStr=fmtDate(d);html+=`<div class="cal-day ${d.getMonth()!==miniCalMonth?'other-month':''} ${dateStr===todayStr?'today':''} ${dateStr===selectedDate?'selected':''} ${weekDates.has(dateStr)&&dateStr!==todayStr&&dateStr!==selectedDate?'in-week':''} ${datesWithTasks.has(dateStr)?'has-task':''}" onclick="selectDate('${dateStr}')">${d.getDate()}</div>`;} grid.innerHTML=html; }
+function changeMonth(dir){ miniCalMonth+=dir; if(miniCalMonth>11){miniCalMonth=0;miniCalYear++;} if(miniCalMonth<0){miniCalMonth=11;miniCalYear--;} renderMiniCal(); }
+function selectDate(dateStr){ selectedDate=dateStr; currentWeekStart=getMonday(new Date(dateStr)); document.getElementById('taskDate').value=dateStr; setView('week',document.querySelector('[data-view="week"]')); render(); }
+function toggleMonthPicker(){ const p=document.getElementById('monthPicker');pickerYear=miniCalYear;p.classList.toggle('open');if(p.classList.contains('open'))renderMonthPicker(); }
+function renderMonthPicker(){ document.getElementById('pickerYear').textContent=pickerYear; document.getElementById('mpGrid').innerHTML=MONTH_NAMES.map((m,i)=>`<button class="mp-btn ${i===miniCalMonth&&pickerYear===miniCalYear?'active':''}" onclick="selectMonth(${i})">${m}</button>`).join(''); }
+function changePickerYear(dir){ pickerYear+=dir;renderMonthPicker(); }
+function selectMonth(idx){ miniCalMonth=idx;miniCalYear=pickerYear;document.getElementById('monthPicker').classList.remove('open');renderMiniCal(); }
+
+// ─── VIEW / FILTER ───────────────────────────────────────
+function setView(view,btn){ currentView=view; document.querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active')); if(btn)btn.classList.add('active'); document.getElementById('weekView').classList.toggle('active',view==='week'); document.getElementById('listView').classList.toggle('active',view==='list'); updateMainTitle(); }
+function setFilter(cat){ filterCat=cat;render(); }
+function showToast(msg){ const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800); }
+
+// ─── PWA ─────────────────────────────────────────────────
+if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;document.getElementById('installBtn').style.display='flex';});
+function installApp(){if(!deferredPrompt)return;deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{deferredPrompt=null;document.getElementById('installBtn').style.display='none';});}
+window.addEventListener('appinstalled',()=>{document.getElementById('installBtn').style.display='none';showToast('App geïnstalleerd!');});
+window.addEventListener('offline',()=>{document.getElementById('offlineBanner').style.display='block';});
+window.addEventListener('online',()=>{document.getElementById('offlineBanner').style.display='none';showToast('Weer online!');});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeTaskModal();closeOverviewPage();closeProfileModal();}});
+
+// ─── INIT ────────────────────────────────────────────────
+const curProfile=profiles.find(p=>p.id===currentProfileId)||profiles[0];
+document.getElementById('currentProfileEmoji').textContent=curProfile.emoji;
+document.getElementById('currentProfileName').textContent=curProfile.name;
+document.getElementById('taskDate').value=fmtDate(new Date());
+buildCatOptions('taskCategory',null);
+(async()=>{ await seedDefaultTasks(); render(); })();
+setInterval(()=>{if(notificationsEnabled)checkTasksNow();},60000);
+</script>
+</body>
+</html>
