@@ -15,90 +15,478 @@
 :root{
   --cream:#F5F0E8;--warm-white:#FDFAF5;
   --sage:#7C9E8A;--sage-light:#A8C4B4;--sage-dark:#4A6B57;
-  --terracotta:#C4714A;
+  --terracotta:#C4714A;--terracotta-light:#E8A882;
+  --amber:#C48A1A;
   --charcoal:#2C2C2C;--mid-gray:#6B6B6B;--light-gray:#E0DAD0;
-  --shadow:rgba(44,44,44,.08);--shadow-md:rgba(44,44,44,.15);
+  --shadow:rgba(44,44,44,.08);--shadow-md:rgba(44,44,44,.14);
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'DM Sans',system-ui,sans-serif;background:var(--cream);color:var(--charcoal);min-height:100vh;}
-header{background:var(--sage-dark);color:white;padding:22px 28px;box-shadow:0 2px 14px var(--shadow-md);}
-header h1{font-family:'DM Serif Display',Georgia,serif;font-size:2rem;letter-spacing:-.01em;}
-header p{font-size:.82rem;opacity:.72;margin-top:5px;font-weight:300;}
-.container{max-width:720px;margin:0 auto;padding:36px 22px;}
-.greeting{margin-bottom:32px;}
-.greeting h2{font-family:'DM Serif Display',Georgia,serif;font-size:1.5rem;}
-.greeting p{font-size:.85rem;color:var(--mid-gray);margin-top:5px;}
-.app-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px;}
-.app-card{background:var(--warm-white);border-radius:18px;padding:26px 24px;border:1px solid var(--light-gray);text-decoration:none;color:var(--charcoal);transition:all .22s;display:flex;flex-direction:column;gap:11px;box-shadow:0 2px 10px var(--shadow);}
-.app-card:hover{box-shadow:0 8px 28px var(--shadow-md);transform:translateY(-3px);border-color:var(--sage-light);}
-.app-card-icon{font-size:2.8rem;line-height:1;}
-.app-card-name{font-family:'DM Serif Display',Georgia,serif;font-size:1.3rem;}
-.app-card-desc{font-size:.82rem;color:var(--mid-gray);line-height:1.6;flex:1;}
-.app-card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:4px;}
-.app-card-badge{display:inline-flex;align-items:center;gap:5px;background:var(--cream);border-radius:20px;padding:4px 11px;font-size:.73rem;color:var(--sage-dark);font-weight:500;}
-.app-card-arrow{color:var(--sage-light);font-size:1.3rem;font-weight:300;transition:color .2s;}
+
+/* ── HEADER ── */
+header{background:var(--sage-dark);color:white;padding:13px 22px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px var(--shadow-md);position:sticky;top:0;z-index:50;gap:10px;}
+header h1{font-family:'DM Serif Display',Georgia,serif;font-size:1.5rem;letter-spacing:-.01em;}
+.header-right{display:flex;align-items:center;gap:6px;}
+.hdr-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:white;padding:6px 12px;border-radius:22px;cursor:pointer;font-family:inherit;font-size:.74rem;font-weight:500;transition:all .2s;display:flex;align-items:center;gap:5px;white-space:nowrap;}
+.hdr-btn:hover{background:rgba(255,255,255,.28);}
+.hdr-btn.active{background:var(--terracotta);border-color:var(--terracotta);}
+
+/* ── PAGE ── */
+.page{max-width:780px;margin:0 auto;padding:26px 20px 48px;}
+
+/* ── GREETING ── */
+.greeting{margin-bottom:20px;}
+.greeting h2{font-family:'DM Serif Display',Georgia,serif;font-size:1.6rem;color:var(--charcoal);}
+.greeting p{font-size:.85rem;color:var(--mid-gray);margin-top:4px;}
+
+/* ── STAT CHIPS ── */
+.stat-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;}
+.stat-chip{display:flex;align-items:center;gap:6px;background:var(--warm-white);border:1px solid var(--light-gray);border-radius:22px;padding:6px 14px;font-size:.8rem;font-weight:500;box-shadow:0 1px 4px var(--shadow);}
+.stat-chip .chip-num{font-size:1rem;font-weight:700;}
+.stat-chip.red{background:#FEF0EC;border-color:#F0C4B4;color:var(--terracotta);}
+.stat-chip.green{background:#EBF4EE;border-color:#B4D4BC;color:var(--sage-dark);}
+.stat-chip.amber{background:#FEF8E6;border-color:#EDD89A;color:var(--amber);}
+
+/* ── DASHBOARD SECTIONS ── */
+.dash-section{margin-bottom:22px;}
+.dash-section-header{display:flex;align-items:center;gap:8px;margin-bottom:9px;padding-bottom:6px;border-bottom:2px solid var(--light-gray);}
+.dash-section-header.overdue{border-color:#F0C4B4;}
+.dash-section-header.today{border-color:var(--sage-light);}
+.dash-section-header.tomorrow{border-color:var(--amber-light,#EDD89A);}
+.dash-section-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;}
+.dash-section-title.overdue{color:var(--terracotta);}
+.dash-section-title.today{color:var(--sage-dark);}
+.dash-section-title.tomorrow{color:var(--amber);}
+.dash-section-title.week{color:var(--mid-gray);}
+.dash-section-count{font-size:.65rem;background:var(--light-gray);padding:1px 7px;border-radius:10px;color:var(--mid-gray);font-weight:400;}
+
+/* ── DASHBOARD ITEMS ── */
+.dash-item{background:var(--warm-white);border-radius:10px;padding:10px 13px;margin-bottom:5px;display:flex;align-items:center;gap:10px;border:1px solid var(--light-gray);transition:box-shadow .15s;}
+.dash-item:hover{box-shadow:0 2px 10px var(--shadow);}
+.dash-item.overdue-item{border-left:3px solid var(--terracotta);}
+.source-icon{font-size:1rem;flex-shrink:0;width:22px;text-align:center;}
+.prio-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.dash-item-body{flex:1;min-width:0;}
+.dash-item-title{font-size:.85rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dash-item-meta{font-size:.71rem;color:var(--mid-gray);margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.meta-badge{background:var(--cream);border-radius:8px;padding:1px 7px;font-size:.66rem;white-space:nowrap;}
+.meta-badge.red{background:#FEF0EC;color:var(--terracotta);}
+.meta-badge.green{background:#EBF4EE;color:var(--sage-dark);}
+.dash-open-link{color:var(--sage-light);font-size:1.1rem;text-decoration:none;flex-shrink:0;transition:color .15s;padding:2px 4px;}
+.dash-open-link:hover{color:var(--sage-dark);}
+.dash-empty{font-size:.82rem;color:var(--mid-gray);font-style:italic;padding:6px 0 2px;}
+
+/* ── DIVIDER ── */
+.section-divider{display:flex;align-items:center;gap:12px;margin:28px 0 22px;color:var(--mid-gray);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;}
+.section-divider::before,.section-divider::after{content:'';flex:1;height:1px;background:var(--light-gray);}
+
+/* ── APP LAUNCHER ── */
+.app-grid{display:flex;flex-direction:column;gap:8px;}
+.app-card{background:var(--warm-white);border-radius:12px;padding:13px 16px;border:1px solid var(--light-gray);text-decoration:none;color:var(--charcoal);transition:all .18s;display:flex;align-items:center;gap:13px;box-shadow:0 1px 6px var(--shadow);}
+.app-card:hover{box-shadow:0 4px 18px var(--shadow-md);transform:translateX(2px);border-color:var(--sage-light);}
+.app-card-icon{font-size:1.7rem;flex-shrink:0;width:36px;text-align:center;}
+.app-card-info{flex:1;min-width:0;}
+.app-card-name{font-weight:600;font-size:.9rem;}
+.app-card-desc{font-size:.73rem;color:var(--mid-gray);margin-top:1px;}
+.app-card-badge{font-size:.7rem;padding:2px 9px;border-radius:10px;background:var(--cream);color:var(--mid-gray);white-space:nowrap;flex-shrink:0;}
+.app-card-badge.red{background:#FEF0EC;color:var(--terracotta);}
+.app-card-badge.green{background:#EBF4EE;color:var(--sage-dark);}
+.app-card-arrow{color:var(--sage-light);font-size:1.1rem;flex-shrink:0;transition:color .15s;}
 .app-card:hover .app-card-arrow{color:var(--sage-dark);}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:20px;right:20px;background:var(--charcoal);color:white;padding:10px 16px;border-radius:10px;font-size:.8rem;opacity:0;transform:translateY(8px);transition:all .25s;z-index:999;max-width:300px;pointer-events:none;}
+#toast.show{opacity:1;transform:translateY(0);}
+
 @media(max-width:500px){
-  header{padding:16px 18px;}
-  header h1{font-size:1.5rem;}
-  .container{padding:22px 14px;}
-  .greeting{margin-bottom:22px;}
-  .app-grid{grid-template-columns:1fr;}
+  header{padding:11px 14px;}
+  header h1{font-size:1.15rem;}
+  .page{padding:18px 13px 40px;}
+  .greeting h2{font-size:1.3rem;}
 }
 </style>
 </head>
 <body>
 <header>
   <h1>🏡 Thuis Apps</h1>
-  <p>Jouw slimme thuisassistent</p>
+  <div class="header-right">
+    <button class="hdr-btn" id="notifBtn" onclick="toggleMorningNotif()">🔔 7:00 herinnering</button>
+    <button class="hdr-btn" id="installBtn" onclick="installApp()" style="display:none">📲 Installeer</button>
+  </div>
 </header>
-<div class="container">
+
+<div class="page">
+  <!-- GREETING -->
   <div class="greeting">
     <h2 id="greetingText">Welkom!</h2>
     <p id="greetingDate"></p>
   </div>
+
+  <!-- STAT CHIPS -->
+  <div class="stat-chips" id="statChips"></div>
+
+  <!-- DASHBOARD SECTIONS -->
+  <div id="dashSections"></div>
+
+  <!-- APP LAUNCHER -->
+  <div class="section-divider">Apps</div>
   <div class="app-grid">
     <a href="kalender.html" class="app-card">
       <div class="app-card-icon">📅</div>
-      <div class="app-card-name">Huishoud Kalender</div>
-      <div class="app-card-desc">Plan en beheer huishoudelijke taken met herhalingen voor dagelijkse, wekelijkse en maandelijkse klussen.</div>
-      <div class="app-card-footer">
-        <div class="app-card-badge" id="calBadge">Openen</div>
-        <div class="app-card-arrow">→</div>
+      <div class="app-card-info">
+        <div class="app-card-name">Huishoud Kalender</div>
+        <div class="app-card-desc">Plan terugkerende huishoudtaken</div>
       </div>
+      <div class="app-card-badge" id="calBadge">Openen</div>
+      <div class="app-card-arrow">›</div>
+    </a>
+    <a href="todo.html" class="app-card">
+      <div class="app-card-icon">✅</div>
+      <div class="app-card-info">
+        <div class="app-card-name">To Do</div>
+        <div class="app-card-desc">Acties en deadlines bijhouden</div>
+      </div>
+      <div class="app-card-badge" id="todoBadge">Openen</div>
+      <div class="app-card-arrow">›</div>
     </a>
     <a href="boodschappen.html" class="app-card">
       <div class="app-card-icon">🛒</div>
-      <div class="app-card-name">Boodschappenlijst</div>
-      <div class="app-card-desc">Maak boodschappenlijsten met productdetails, merken, hoeveelheden en directe links naar de webwinkel.</div>
-      <div class="app-card-footer">
-        <div class="app-card-badge" id="shopBadge">Openen</div>
-        <div class="app-card-arrow">→</div>
+      <div class="app-card-info">
+        <div class="app-card-name">Boodschappenlijst</div>
+        <div class="app-card-desc">Producten met winkellinks</div>
       </div>
+      <div class="app-card-badge" id="shopBadge">Openen</div>
+      <div class="app-card-arrow">›</div>
     </a>
   </div>
 </div>
+
+<div id="toast"></div>
+
 <script>
+// ─── DATE ────────────────────────────────────────────────
+const TODAY  = new Date(); TODAY.setHours(0,0,0,0);
+const todayStr    = d2s(TODAY);
+const tomorrowStr = d2s(new Date(TODAY.getTime() + 86400000));
+const weekEndStr  = d2s(new Date(TODAY.getTime() + 7 * 86400000));
+const pastStr     = d2s(new Date(TODAY.getTime() - 14 * 86400000));
+
+function d2s(d){ return d.toISOString().split('T')[0]; }
+
+// ─── CAL RECURRENCE ──────────────────────────────────────
+const CAL_CATS = {
+  schoonmaken:{emoji:'🧹',color:'#7C9E8A'},koken:{emoji:'🍳',color:'#C4714A'},
+  tuin:{emoji:'🌿',color:'#5A8A4A'},was:{emoji:'👕',color:'#5B7FA6'},
+  onderhoud:{emoji:'🔧',color:'#8A6FA0'},overig:{emoji:'📋',color:'#A08060'},
+};
+const PRIO_COLOR = {high:'#C4714A',medium:'#C48A1A',low:'#5A8A4A',none:'#CCCCCC'};
+
+function advRep(date,rep){
+  const d=new Date(date);
+  switch(rep){
+    case 'daily':d.setDate(d.getDate()+1);break;
+    case 'weekly':d.setDate(d.getDate()+7);break;
+    case 'biweekly':d.setDate(d.getDate()+14);break;
+    case 'monthly':d.setMonth(d.getMonth()+1);break;
+    case 'bimonthly':d.setMonth(d.getMonth()+2);break;
+    case 'quarterly':d.setMonth(d.getMonth()+3);break;
+    case 'halfyear':d.setMonth(d.getMonth()+6);break;
+    case 'yearly':d.setFullYear(d.getFullYear()+1);break;
+  }
+  return d;
+}
+
+function calInstances(task, from, to){
+  const fromD=new Date(from+'T00:00:00'), toD=new Date(to+'T23:59:59');
+  const out=[];
+  if(task.repeat==='none'){
+    if(task.date>=from&&task.date<=to){
+      if(!(task.skipDates||[]).includes(task.date))
+        out.push({...task,done:task.done});
+    }
+    return out;
+  }
+  let cur=new Date(task.date+'T00:00:00');
+  if(cur>toD)return out;
+  let s=0;
+  while(cur<=toD&&s++<3000){
+    const ds=d2s(cur);
+    if(cur>=fromD&&!(task.skipDates||[]).includes(ds)){
+      const done=(task.doneInstances||[]).includes(ds);
+      out.push({...task,date:ds,done});
+    }
+    cur=advRep(cur,task.repeat);
+  }
+  return out;
+}
+
+// ─── LOAD DATA ───────────────────────────────────────────
+function loadCalItems(from, to){
+  try{
+    const pid=localStorage.getItem('hk_current')||'default';
+    const tasks=JSON.parse(localStorage.getItem(`hk_tasks_${pid}`)||'[]');
+    const out=[];
+    tasks.forEach(t=>{
+      calInstances(t,from,to).forEach(i=>{
+        if(!i.done){
+          const cat=CAL_CATS[i.category]||{emoji:'📋',color:'#999'};
+          out.push({type:'cal',id:i.id,date:i.date,time:i.time||'',title:i.name,meta:i.category,catEmoji:cat.emoji,catColor:cat.color,dot:cat.color,link:'kalender.html'});
+        }
+      });
+    });
+    return out;
+  }catch(e){return[];}
+}
+
+function loadTodoItems(){
+  try{
+    const projs=JSON.parse(localStorage.getItem('td_projects')||'[]');
+    const out=[];
+    projs.forEach(p=>{
+      JSON.parse(localStorage.getItem(`td_tasks_${p.id}`)||'[]').forEach(t=>{
+        if(!t.done){
+          out.push({type:'todo',id:t.id,date:t.deadline||'',time:t.deadlineTime||'',title:t.title,meta:p.name,catEmoji:p.icon,dot:PRIO_COLOR[t.priority||'none'],priority:t.priority||'none',link:'todo.html'});
+        }
+      });
+    });
+    return out;
+  }catch(e){return[];}
+}
+
+// ─── BUILD DASHBOARD DATA ─────────────────────────────────
+function buildData(){
+  const overdue=[],today=[],tomorrow=[],week=[];
+
+  // Calendar: overdue (past 14 days, undone)
+  const calOver=loadCalItems(pastStr, d2s(new Date(TODAY.getTime()-86400000)));
+  calOver.forEach(i=>overdue.push(i));
+
+  // Calendar: today, tomorrow, week
+  const calToday=loadCalItems(todayStr,todayStr); calToday.forEach(i=>today.push(i));
+  const calTom=loadCalItems(tomorrowStr,tomorrowStr); calTom.forEach(i=>tomorrow.push(i));
+  const weekStart=d2s(new Date(TODAY.getTime()+2*86400000));
+  const calWeek=loadCalItems(weekStart,weekEndStr); calWeek.forEach(i=>week.push(i));
+
+  // Todo items
+  const todos=loadTodoItems();
+  todos.forEach(t=>{
+    if(!t.date){week.push(t);return;}
+    if(t.date<todayStr)overdue.push(t);
+    else if(t.date===todayStr)today.push(t);
+    else if(t.date===tomorrowStr)tomorrow.push(t);
+    else if(t.date<=weekEndStr)week.push(t);
+  });
+
+  // Sort: time asc, then priority
+  const sort=(arr)=>arr.sort((a,b)=>{
+    if(a.time&&b.time)return a.time.localeCompare(b.time);
+    if(a.time)return-1; if(b.time)return 1;
+    const po={high:0,medium:1,low:2,none:3};
+    return(po[a.priority||'none']-po[b.priority||'none'])||a.date.localeCompare(b.date);
+  });
+  return{overdue:sort(overdue),today:sort(today),tomorrow:sort(tomorrow),week:sort(week)};
+}
+
+// ─── RENDER DASHBOARD ────────────────────────────────────
+function itemHTML(item, showDate){
+  const isOverdue=item.date&&item.date<todayStr;
+  const timeLabel=item.time?item.time:'';
+  let dateLabel='';
+  if(showDate&&item.date){
+    const d=new Date(item.date+'T12:00:00');
+    dateLabel=d.toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'short'});
+  }
+  const ovdBadge=isOverdue?`<span class="meta-badge red">verlopen ${item.date?new Date(item.date+'T12:00:00').toLocaleDateString('nl-NL',{day:'numeric',month:'short'}):''}</span>`:'';
+  return`<div class="dash-item ${isOverdue?'overdue-item':''}">
+    <span class="source-icon">${item.catEmoji}</span>
+    <div class="prio-dot" style="background:${item.dot}"></div>
+    <div class="dash-item-body">
+      <div class="dash-item-title">${escHtml(item.title)}</div>
+      <div class="dash-item-meta">
+        ${timeLabel?`<span>${timeLabel}</span>`:''}
+        ${dateLabel?`<span>${dateLabel}</span>`:''}
+        <span class="meta-badge">${escHtml(item.meta||'')}</span>
+        ${ovdBadge}
+      </div>
+    </div>
+    <a class="dash-open-link" href="${item.link}" title="Open app">›</a>
+  </div>`;
+}
+
+function sectionHTML(id, icon, label, cls, items, showDate, maxItems){
+  if(!items.length)return'';
+  const shown=items.slice(0,maxItems||items.length);
+  const more=items.length-shown.length;
+  return`<div class="dash-section">
+    <div class="dash-section-header ${cls}">
+      <span class="dash-section-title ${cls}">${icon} ${label}</span>
+      <span class="dash-section-count">${items.length}</span>
+    </div>
+    ${shown.map(i=>itemHTML(i,showDate)).join('')}
+    ${more>0?`<div class="dash-empty">... en ${more} meer — open de app voor het volledige overzicht</div>`:''}
+  </div>`;
+}
+
+function renderDashboard(){
+  const data=buildData();
+  const total=data.overdue.length+data.today.length+data.tomorrow.length+data.week.length;
+
+  // Stat chips
+  const chips=[];
+  if(data.today.length>0)chips.push(`<div class="stat-chip green"><span class="chip-num">${data.today.length}</span>vandaag</div>`);
+  if(data.overdue.length>0)chips.push(`<div class="stat-chip red"><span class="chip-num">${data.overdue.length}</span>verlopen</div>`);
+  if(data.tomorrow.length>0)chips.push(`<div class="stat-chip amber"><span class="chip-num">${data.tomorrow.length}</span>morgen</div>`);
+  if(data.week.length>0)chips.push(`<div class="stat-chip"><span class="chip-num">${data.week.length}</span>deze week</div>`);
+  if(!chips.length)chips.push(`<div class="stat-chip green">✓ Niets gepland</div>`);
+  document.getElementById('statChips').innerHTML=chips.join('');
+
+  // Sections
+  let html='';
+  html+=sectionHTML('overdue','⚠️','Verlopen','overdue',data.overdue,true,10);
+  html+=sectionHTML('today','☀️','Vandaag','today',data.today,false,15);
+  html+=sectionHTML('tomorrow','🌅','Morgen','tomorrow',data.tomorrow,false,10);
+  html+=sectionHTML('week','📅','Komende week','week',data.week,true,8);
+  if(!html)html=`<div class="dash-empty" style="padding:20px 0;font-size:.9rem">✓ Geen geplande acties — alles is bij!</div>`;
+  document.getElementById('dashSections').innerHTML=html;
+}
+
+// ─── APP BADGES ──────────────────────────────────────────
+function updateAppBadges(){
+  try{
+    const pid=localStorage.getItem('hk_current')||'default';
+    const cnt=JSON.parse(localStorage.getItem(`hk_tasks_${pid}`)||'[]').length;
+    const el=document.getElementById('calBadge');
+    el.textContent=cnt>0?`${cnt} taken`:'Openen';
+  }catch(e){}
+
+  try{
+    const today=todayStr;
+    const projs=JSON.parse(localStorage.getItem('td_projects')||'[]');
+    let open=0,overdue=0;
+    projs.forEach(p=>{
+      JSON.parse(localStorage.getItem(`td_tasks_${p.id}`)||'[]').forEach(t=>{
+        if(!t.done){open++;if(t.deadline&&t.deadline<today)overdue++;}
+      });
+    });
+    const el=document.getElementById('todoBadge');
+    if(overdue>0){el.textContent=`${overdue} verlopen`;el.className='app-card-badge red';}
+    else if(open>0){el.textContent=`${open} open`;el.className='app-card-badge green';}
+    else el.textContent='Alles klaar';
+  }catch(e){}
+
+  try{
+    const lid=localStorage.getItem('bs_current')||'default';
+    const items=JSON.parse(localStorage.getItem(`bs_items_${lid}`)||'[]');
+    const left=items.filter(i=>!i.checked).length;
+    document.getElementById('shopBadge').textContent=left>0?`${left} te halen`:items.length?'Alles ingeslagen':'Lijst leeg';
+  }catch(e){}
+}
+
+// ─── MORNING NOTIFICATION ────────────────────────────────
+function buildMorningSummary(){
+  const lines=[];
+  // Calendar today + tomorrow
+  const calItems=[...loadCalItems(todayStr,todayStr),...loadCalItems(tomorrowStr,tomorrowStr)];
+  calItems.slice(0,4).forEach(i=>{
+    const pfx=i.date===tomorrowStr?'Morgen: ':'';
+    lines.push(`• ${pfx}${i.time?i.time+' ':''} ${i.title}`);
+  });
+  // Todo today + tomorrow
+  const todos=loadTodoItems().filter(t=>t.date===todayStr||t.date===tomorrowStr);
+  todos.slice(0,3).forEach(t=>{
+    const pfx=t.date===tomorrowStr?'Morgen: ':'';
+    lines.push(`• ${pfx}${t.title}`);
+  });
+  if(!lines.length)return'Geen taken gepland voor vandaag. Fijne dag!';
+  const total=calItems.length+todos.length;
+  const shown=Math.min(lines.length,7);
+  const more=total-shown;
+  return lines.slice(0,7).join('\n')+(more>0?`\n... en ${more} meer`:'')+'\n\nTap om te openen.';
+}
+
+function getMsUntilNextSevenAM(){
+  const now=new Date();
+  const next=new Date(now);
+  next.setHours(7,0,0,0);
+  if(next<=now)next.setDate(next.getDate()+1);
+  return next-now;
+}
+
+async function scheduleMorningViaSW(){
+  if(!('serviceWorker'in navigator))return;
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    if(!reg.active)return;
+    const summary=buildMorningSummary();
+    const msUntil=getMsUntilNextSevenAM();
+    reg.active.postMessage({type:'SCHEDULE_MORNING',summary,msUntil});
+  }catch(e){}
+}
+
+function checkMorningNotificationOnLoad(){
+  if(!localStorage.getItem('morning_notif_enabled'))return;
+  if(!('Notification'in window)||Notification.permission!=='granted')return;
+  const h=new Date().getHours();
+  if(h<7||h>=10)return;
+  const today=todayStr;
+  if(localStorage.getItem('morning_notif_date')===today)return;
+  const summary=buildMorningSummary();
+  try{
+    new Notification('🌅 Goedemorgen! — Thuis Apps',{body:summary,icon:'./icon.svg',tag:'morning-briefing'});
+    localStorage.setItem('morning_notif_date',today);
+  }catch(e){}
+}
+
+async function toggleMorningNotif(){
+  if(localStorage.getItem('morning_notif_enabled')){
+    localStorage.removeItem('morning_notif_enabled');
+    document.getElementById('notifBtn').classList.remove('active');
+    document.getElementById('notifBtn').innerHTML='🔔 7:00 herinnering';
+    showToast('Dagelijkse herinnering uitgeschakeld');
+    return;
+  }
+  if(!('Notification'in window)){showToast('Notificaties niet beschikbaar');return;}
+  const perm=await Notification.requestPermission();
+  if(perm!=='granted'){showToast('Notificaties geweigerd');return;}
+  localStorage.setItem('morning_notif_enabled','1');
+  document.getElementById('notifBtn').classList.add('active');
+  document.getElementById('notifBtn').innerHTML='✅ 7:00 herinnering';
+  await scheduleMorningViaSW();
+  const ms=getMsUntilNextSevenAM();
+  const h=Math.floor(ms/3600000), m=Math.floor((ms%3600000)/60000);
+  showToast(`Herinnering ingesteld! Volgende melding over ${h}u ${m}m`);
+}
+
+function updateNotifBtn(){
+  if(localStorage.getItem('morning_notif_enabled')&&('Notification'in window)&&Notification.permission==='granted'){
+    document.getElementById('notifBtn').classList.add('active');
+    document.getElementById('notifBtn').innerHTML='✅ 7:00 herinnering';
+  }
+}
+
+// ─── UTILS ───────────────────────────────────────────────
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function showToast(msg){ const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000); }
+
+// ─── PWA ─────────────────────────────────────────────────
+if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;document.getElementById('installBtn').style.display='flex';});
+function installApp(){if(!deferredPrompt)return;deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{deferredPrompt=null;document.getElementById('installBtn').style.display='none';});}
+window.addEventListener('appinstalled',()=>{document.getElementById('installBtn').style.display='none';});
+
+// ─── INIT ────────────────────────────────────────────────
 const h=new Date().getHours();
 document.getElementById('greetingText').textContent=(h<12?'Goedemorgen':h<18?'Goedemiddag':'Goedenavond')+'!';
 document.getElementById('greetingDate').textContent=new Date().toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-
-try{
-  const pid=localStorage.getItem('hk_current')||'default';
-  const tasks=JSON.parse(localStorage.getItem(`hk_tasks_${pid}`)||'[]');
-  const today=new Date().toISOString().split('T')[0];
-  const todayCount=tasks.filter(t=>t.date===today||(t.repeat!=='none'&&t.date<=today)).length;
-  document.getElementById('calBadge').textContent=`${tasks.length} taken`;
-}catch(e){}
-
-try{
-  const lid=localStorage.getItem('bs_current')||'default';
-  const items=JSON.parse(localStorage.getItem(`bs_items_${lid}`)||'[]');
-  const left=items.filter(i=>!i.checked).length;
-  document.getElementById('shopBadge').textContent=left>0?`${left} te halen`:items.length>0?'Alles ingeslagen':'Lijst leeg';
-}catch(e){}
-
-if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
+updateNotifBtn();
+renderDashboard();
+updateAppBadges();
+checkMorningNotificationOnLoad();
+// If notifications were already enabled, re-schedule via SW (in case SW was restarted)
+if(localStorage.getItem('morning_notif_enabled')){
+  scheduleMorningViaSW();
+}
 </script>
 </body>
 </html>

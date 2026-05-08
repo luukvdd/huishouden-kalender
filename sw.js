@@ -1,6 +1,6 @@
-const CACHE = 'thuis-v2';
+const CACHE = 'thuis-v4';
 const LOCAL = [
-  './index.html', './kalender.html', './boodschappen.html',
+  './index.html', './kalender.html', './boodschappen.html', './todo.html',
   './manifest.json', './sw.js', './icon.svg', './taken.csv'
 ];
 
@@ -41,6 +41,22 @@ self.addEventListener('fetch', e => {
         })
         .catch(() => caches.match(e.request))
     );
+  }
+});
+
+let morningTimer = null;
+self.addEventListener('message', e => {
+  if (e.data?.type === 'SCHEDULE_MORNING') {
+    if (morningTimer) clearTimeout(morningTimer);
+    morningTimer = setTimeout(async () => {
+      await self.registration.showNotification('🌅 Goedemorgen! — Thuis Apps', {
+        body: e.data.summary || 'Bekijk je taken voor vandaag.',
+        icon: './icon.svg',
+        badge: './icon.svg',
+        tag: 'morning-briefing',
+        requireInteraction: false,
+      });
+    }, e.data.msUntil);
   }
 });
 
