@@ -1,7 +1,7 @@
-const CACHE = 'thuis-v4';
+const CACHE = 'thuis-v5';
 const LOCAL = [
   './index.html', './kalender.html', './boodschappen.html', './todo.html',
-  './manifest.json', './sw.js', './icon.svg', './taken.csv'
+  './instellingen.html', './manifest.json', './sw.js', './icon.svg', './taken.csv'
 ];
 
 self.addEventListener('install', e => {

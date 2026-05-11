@@ -253,7 +253,7 @@ header{background:var(--sage-dark);color:var(--warm-white);padding:12px 22px;dis
     </div>
     <button class="hdr-btn" onclick="openOverviewPage()">📋 Overzicht</button>
     <button class="hdr-btn" id="installBtn" onclick="installApp()" style="display:none">📲 Installeer</button>
-    <button class="hdr-btn" id="notifBtn" onclick="toggleNotifications()">🔔 Notificaties</button>
+    <a href="instellingen.html" class="hdr-btn">⚙️ Instellingen</a>
   </div>
 </header>
 
@@ -506,11 +506,15 @@ async function seedDefaultTasks(){
         const dci=headers.indexOf('omschrijving'),ti=headers.indexOf('tijd');
         const ci=headers.indexOf('categorie'),ri=headers.indexOf('herhaling');
         if(ni>=0&&di>=0){
+          const todayIso=fmtDate(new Date());
           lines.slice(1).forEach(line=>{
             if(!line.trim())return;
             const cols=parseCSVLine(line);
-            const name=(cols[ni]||'').trim(),date=(cols[di]||'').trim();
+            const name=(cols[ni]||'').trim();
+            let date=(cols[di]||'').trim();
             if(!name||!date)return;
+            // Start recurring tasks from today, not from historical dates
+            if(date<todayIso)date=todayIso;
             tasks.push({id:Date.now()+Math.random(),name,description:dci>=0?(cols[dci]||'').trim():'',date,time:ti>=0?(cols[ti]||'09:00').trim():'09:00',category:ci>=0?(cols[ci]||'overig').trim():'overig',repeat:ri>=0?(cols[ri]||'none').trim():'none',done:false,doneInstances:[],skipDates:[]});
           });
           saveTasks();
@@ -647,8 +651,29 @@ function saveProfile(){
 function deleteCurrentProfile(){ const editId=document.getElementById('profileModal').dataset.editId; if(!editId||profiles.length<=1){showToast('Minimaal 1 profiel vereist');return;} if(!confirm('Profiel verwijderen? Alle taken worden verwijderd.'))return; localStorage.removeItem(taskKey(editId)); profiles=profiles.filter(p=>p.id!==editId); saveProfiles(); closeProfileModal(); switchProfile(profiles[0].id); showToast('Profiel verwijderd'); }
 
 // ─── NOTIFICATIONS ────────────────────────────────────────
-async function toggleNotifications(){ if(notificationsEnabled){notificationsEnabled=false;clearInterval(notifIntervalId);document.getElementById('notifBtn').textContent='🔔 Notificaties';document.getElementById('notifBtn').classList.remove('active');showToast('Notificaties uitgeschakeld');return;}if(!('Notification'in window)){showToast('Geen notificaties beschikbaar');return;}const perm=await Notification.requestPermission();if(perm==='granted'){notificationsEnabled=true;document.getElementById('notifBtn').innerHTML='✅ Notificaties aan';document.getElementById('notifBtn').classList.add('active');notifIntervalId=setInterval(checkTasksNow,60000);checkTasksNow();showToast('Notificaties ingeschakeld!');}else{showToast('Notificaties geweigerd.');} }
-function checkTasksNow(){ if(!notificationsEnabled)return; const now=new Date(); const t=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`; tasks.forEach(task=>getTaskInstances(task,now,now).forEach(i=>{if(i&&!i.done&&i.time===t)new Notification('📅 Taak',{body:`${CATEGORIES[task.category]?.emoji||'📋'} ${task.name}`,icon:'./icon.svg'});})); }
+function getCalSettings(){ try{ const s=JSON.parse(localStorage.getItem('thuis_settings')||'{}'); return{enabled:!!s.calNotif?.enabled,minsBefore:s.calNotif?.minsBefore??15}; }catch(e){return{enabled:false,minsBefore:15};} }
+function checkTasksNow(){
+  const cfg=getCalSettings();
+  if(!cfg.enabled)return;
+  if(!('Notification'in window)||Notification.permission!=='granted')return;
+  const now=new Date();
+  const target=new Date(now.getTime()+cfg.minsBefore*60000);
+  const t=`${String(target.getHours()).padStart(2,'0')}:${String(target.getMinutes()).padStart(2,'0')}`;
+  const todayStr=fmtDate(now);
+  tasks.forEach(task=>getTaskInstances(task,now,now).forEach(i=>{
+    if(!i||i.done||i.time!==t)return;
+    const key=`calnotif_${task.id}_${todayStr}_${t}`;
+    if(localStorage.getItem(key))return;
+    const label=cfg.minsBefore>0?` (over ${cfg.minsBefore} min)`:'';
+    new Notification('📅 Taak'+label,{body:`${CATEGORIES[task.category]?.emoji||'📋'} ${task.name}`,icon:'./icon.svg',tag:key});
+    localStorage.setItem(key,'1');
+  }));
+}
+function initCalNotifications(){
+  if(getCalSettings().enabled&&('Notification'in window)&&Notification.permission==='granted'){
+    checkTasksNow();
+  }
+}
 
 // ─── CRUD ────────────────────────────────────────────────
 function addTask(){ const name=document.getElementById('taskName').value.trim(); const desc=document.getElementById('taskDesc').value.trim(); const date=document.getElementById('taskDate').value; const time=document.getElementById('taskTime').value; const cat=document.getElementById('taskCategory').value; const rep=document.getElementById('taskRepeat').value; if(!name||!date){showToast('Vul een naam en datum in');return;} tasks.push({id:Date.now(),name,description:desc,date,time,category:cat,repeat:rep,done:false,doneInstances:[],skipDates:[]}); saveTasks(); document.getElementById('taskName').value=''; document.getElementById('taskDesc').value=''; showToast(`"${name}" toegevoegd!`); render(); }
@@ -732,7 +757,8 @@ document.getElementById('currentProfileName').textContent=curProfile.name;
 document.getElementById('taskDate').value=fmtDate(new Date());
 buildCatOptions('taskCategory',null);
 (async()=>{ await seedDefaultTasks(); render(); })();
-setInterval(()=>{if(notificationsEnabled)checkTasksNow();},60000);
+setInterval(checkTasksNow,60000);
+initCalNotifications();
 </script>
 </body>
 </html>

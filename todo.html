@@ -205,7 +205,7 @@ header{background:var(--sage-dark);color:white;padding:12px 22px;display:flex;al
         <button class="proj-new-btn" onclick="openProjModal(null)">＋ Nieuw project</button>
       </div>
     </div>
-    <button class="hdr-btn primary" onclick="openTaskModal(null)">＋ Taak</button>
+    <a href="instellingen.html" class="hdr-btn">⚙️ Instellingen</a>
   </div>
 </header>
 
@@ -731,6 +731,50 @@ function taskHTML(task){
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function showToast(msg){ const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800); }
 
+// ─── NOTIFICATIONS ───────────────────────────────────────
+function getTodoSettings(){
+  try{const s=JSON.parse(localStorage.getItem('thuis_settings')||'{}');return{enabled:!!s.todo?.enabled,r1:s.todo?.r1??60,r2:s.todo?.r2??{enabled:false,mins:30,prio:'medium'},r3:s.todo?.r3??{enabled:false,mins:10,prio:'high'}};}
+  catch(e){return{enabled:false,r1:60,r2:{enabled:false,mins:30,prio:'medium'},r3:{enabled:false,mins:10,prio:'high'}};}
+}
+const PRIO_RANK={high:0,medium:1,low:2,none:3};
+function meetsMinPrio(taskPrio,minPrio){return(PRIO_RANK[taskPrio||'none']||3)<=(PRIO_RANK[minPrio||'none']||3);}
+
+function checkTodoNotifs(){
+  const cfg=getTodoSettings();
+  if(!cfg.enabled)return;
+  if(!('Notification'in window)||Notification.permission!=='granted')return;
+  const now=new Date();
+  const todayStr2=now.toISOString().split('T')[0];
+  const all=getAllTasks();
+
+  function tryReminder(minsB,minPrio,idx){
+    const target=new Date(now.getTime()+minsB*60000);
+    const tStr=`${String(target.getHours()).padStart(2,'0')}:${String(target.getMinutes()).padStart(2,'0')}`;
+    all.forEach(t=>{
+      if(t.done||t.deadline!==todayStr2||!t.deadlineTime)return;
+      if(t.deadlineTime!==tStr)return;
+      if(minPrio&&!meetsMinPrio(t.priority,minPrio))return;
+      const key=`tdnotif_${t.id}_${minsB}_${todayStr2}`;
+      if(localStorage.getItem(key))return;
+      const mLabel=minsB>=60?`${Math.round(minsB/60)}u`:`${minsB}m`;
+      new Notification(`✅ Herinnering — ${t.title}`,{body:`Deadline over ${mLabel}`,icon:'./icon.svg',tag:key});
+      localStorage.setItem(key,'1');
+    });
+  }
+
+  tryReminder(cfg.r1,null,1);
+  if(cfg.r2.enabled)tryReminder(cfg.r2.mins,cfg.r2.prio,2);
+  if(cfg.r3.enabled)tryReminder(cfg.r3.mins,cfg.r3.prio,3);
+}
+
+function initTodoNotifications(){
+  const cfg=getTodoSettings();
+  if(cfg.enabled&&('Notification'in window)&&Notification.permission==='granted'){
+    checkTodoNotifs();
+    setInterval(checkTodoNotifs,60000);
+  }
+}
+
 // ─── KEYBOARD ────────────────────────────────────────────
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeTaskModal();closeProjModal();closeProjDropdown();} });
 
@@ -741,6 +785,7 @@ if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
 updateProjHeader();
 renderSidebar();
 render();
+initTodoNotifications();
 </script>
 </body>
 </html>
